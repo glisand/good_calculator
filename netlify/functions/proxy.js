@@ -1,10 +1,11 @@
-const PROXY_URL = "https://goodcalculator.netlify.app/proxy";
+const PROXY_URL = "https://proxify.netlify.app/proxy";
 
 exports.handler = async (event) => {
     if (event.httpMethod === 'POST') {
         try {
             const body = JSON.parse(event.body);
 
+            // パスワード検証
             if (body.action === 'validateCredentials') {
                 const { username, password } = body;
                 if (username === 'glisand' && password === '0721454511112222') {
@@ -20,6 +21,7 @@ exports.handler = async (event) => {
                 }
             }
 
+            // プロキシ機能
             if (body.action === 'proxyRequest' && body.url) {
                 const htmlContent = await getURL(body.url);
                 return {
