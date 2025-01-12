@@ -42,7 +42,7 @@ function submitCredentials() {
     if (username === 'glisand' && password === '0721454511112222') {
         urlInput.style.display = 'block';
     } else {
-        alert('ユーザー名またはパスワードが間違っています');
+        alert('??');
     }
 }
 
