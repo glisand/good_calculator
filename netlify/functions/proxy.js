@@ -1,12 +1,23 @@
 exports.handler = async (event) => {
     if (event.httpMethod === 'POST') {
         const body = JSON.parse(event.body);
-        if (body.expression === '0721+4545*1111/2222') {
-            return {
-                statusCode: 200,
-                body: JSON.stringify({ popup: true })
-            };
-        } else if (body.url) {
+
+        if (body.action === 'validateCredentials') {
+            const { username, password } = body;
+            if (username === 'glisand' && password === '0721454511112222') {
+                return {
+                    statusCode: 200,
+                    body: JSON.stringify({ success: true })
+                };
+            } else {
+                return {
+                    statusCode: 401,
+                    body: JSON.stringify({ success: false, message: 'Invalid credentials' })
+                };
+            }
+        }
+
+        if (body.action === 'proxyRequest' && body.url) {
             try {
                 const response = await fetch(body.url);
                 const data = await response.text();

@@ -13,19 +13,7 @@ function clearDisplay() {
 function calculate() {
     let expression = display.value;
     if (expression === '0721+4545*1111/2222') {
-        fetch('/.netlify/functions/proxy', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ expression: expression })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.popup) {
-                popup.style.display = 'block';
-            }
-        });
+        popup.style.display = 'block';
     } else {
         try {
             display.value = eval(expression);
@@ -39,36 +27,37 @@ function submitCredentials() {
     let username = document.getElementById('username').value;
     let password = document.getElementById('password').value;
 
-    if (username === 'glisand' && password === '0721454511112222') {
-        urlInput.style.display = 'block';
-    } else {
-        alert('ユーザー名またはパスワードが間違っています');
-    }
-}
-
-function executeProxy() {
-    let proxyUrl = document.getElementById('proxyUrl').value;
     fetch('/.netlify/functions/proxy', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ url: proxyUrl })
+        body: JSON.stringify({
+            action: 'validateCredentials',
+            username: username,
+            password: password
+        })
     })
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            showProxyResult(data.data);
+            urlInput.style.display = 'block';
         } else {
-            alert('プロキシ実行中にエラーが発生しました: ' + (data.error || 'Unknown error'));
+            alert('ユーザー名またはパスワードが間違っています');
         }
     })
     .catch(error => {
-        alert('プロキシ実行中にエラーが発生しました: ' + error.message);
+        alert('エラーが発生しました: ' + error.message);
     });
 }
 
-function showProxyResult(htmlContent) {
+function executeProxy() {
+    let proxyUrl = document.getElementById('proxyUrl').value;
+
+    showProxyBrowser(proxyUrl);
+}
+
+function showProxyBrowser(url) {
     let dialog = document.createElement('div');
     dialog.style.position = 'fixed';
     dialog.style.top = '50%';
@@ -81,7 +70,7 @@ function showProxyResult(htmlContent) {
     dialog.style.zIndex = '1000';
     dialog.style.width = '80%';
     dialog.style.height = '80%';
-    dialog.style.overflow = 'auto';
+    dialog.style.overflow = 'hidden';
 
     let closeButton = document.createElement('button');
     closeButton.innerText = '閉じる';
@@ -90,11 +79,14 @@ function showProxyResult(htmlContent) {
     closeButton.style.right = '10px';
     closeButton.onclick = () => document.body.removeChild(dialog);
 
-    let content = document.createElement('div');
-    content.innerHTML = htmlContent;
+    let iframe = document.createElement('iframe');
+    iframe.src = url;
+    iframe.style.width = '100%';
+    iframe.style.height = 'calc(100% - 40px)';
+    iframe.style.border = 'none';
 
     dialog.appendChild(closeButton);
-    dialog.appendChild(content);
+    dialog.appendChild(iframe);
 
     document.body.appendChild(dialog);
 }
