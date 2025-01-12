@@ -1,3 +1,5 @@
+const fetch = require('node-fetch');
+
 exports.handler = async (event) => {
     if (event.httpMethod === 'POST') {
         const body = JSON.parse(event.body);

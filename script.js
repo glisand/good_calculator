@@ -54,10 +54,30 @@ function submitCredentials() {
 function executeProxy() {
     let proxyUrl = document.getElementById('proxyUrl').value;
 
-    showProxyBrowser(proxyUrl);
+    fetch('/.netlify/functions/proxy', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            action: 'proxyRequest',
+            url: proxyUrl
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showProxyContent(data.data);
+        } else {
+            alert('プロキシ実行中にエラーが発生しました: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        alert('プロキシ実行中にエラーが発生しました: ' + error.message);
+    });
 }
 
-function showProxyBrowser(url) {
+function showProxyContent(htmlContent) {
     let dialog = document.createElement('div');
     dialog.style.position = 'fixed';
     dialog.style.top = '50%';
@@ -70,7 +90,7 @@ function showProxyBrowser(url) {
     dialog.style.zIndex = '1000';
     dialog.style.width = '80%';
     dialog.style.height = '80%';
-    dialog.style.overflow = 'hidden';
+    dialog.style.overflow = 'auto';
 
     let closeButton = document.createElement('button');
     closeButton.innerText = '閉じる';
@@ -79,14 +99,11 @@ function showProxyBrowser(url) {
     closeButton.style.right = '10px';
     closeButton.onclick = () => document.body.removeChild(dialog);
 
-    let iframe = document.createElement('iframe');
-    iframe.src = url;
-    iframe.style.width = '100%';
-    iframe.style.height = 'calc(100% - 40px)';
-    iframe.style.border = 'none';
+    let content = document.createElement('div');
+    content.innerHTML = htmlContent;
 
     dialog.appendChild(closeButton);
-    dialog.appendChild(iframe);
+    dialog.appendChild(content);
 
     document.body.appendChild(dialog);
 }
