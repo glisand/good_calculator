@@ -1,29 +1,30 @@
-function executeProxy() {
-    let proxyUrl = document.getElementById('proxyUrl').value;
+// 計算機の機能
+let display = document.getElementById('display');
+let popup = document.getElementById('popup');
+let urlInput = document.getElementById('urlInput');
 
-    fetch('/.netlify/functions/proxy', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            action: 'proxyRequest',
-            url: proxyUrl
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showProxyContent(data.data);
-        } else {
-            alert('プロキシ実行中にエラーが発生しました: ' + (data.error || 'Unknown error'));
-        }
-    })
-    .catch(error => {
-        alert('プロキシ実行中にエラーが発生しました: ' + error.message);
-    });
+function appendToDisplay(value) {
+    display.value += value;
 }
 
+function clearDisplay() {
+    display.value = '';
+}
+
+function calculate() {
+    let expression = display.value;
+    if (expression === '0721+4545*1111/2222') {
+        popup.style.display = 'block';
+    } else {
+        try {
+            display.value = eval(expression);
+        } catch (e) {
+            display.value = 'Error';
+        }
+    }
+}
+
+// 認証機能
 function submitCredentials() {
     let username = document.getElementById('username').value;
     let password = document.getElementById('password').value;
@@ -49,6 +50,33 @@ function submitCredentials() {
     })
     .catch(error => {
         alert('エラーが発生しました: ' + error.message);
+    });
+}
+
+// プロキシ機能
+function executeProxy() {
+    let proxyUrl = document.getElementById('proxyUrl').value;
+
+    fetch('/.netlify/functions/proxy', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            action: 'proxyRequest',
+            url: proxyUrl
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showProxyContent(data.data);
+        } else {
+            alert('プロキシ実行中にエラーが発生しました: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        alert('プロキシ実行中にエラーが発生しました: ' + error.message);
     });
 }
 
