@@ -86,34 +86,3 @@ function executeProxy() {
 
     document.body.appendChild(dialog);
 }
-
-function showProxyContent(htmlContent) {
-    let dialog = document.createElement('div');
-    dialog.style.position = 'fixed';
-    dialog.style.top = '50%';
-    dialog.style.left = '50%';
-    dialog.style.transform = 'translate(-50%, -50%)';
-    dialog.style.backgroundColor = '#fff';
-    dialog.style.padding = '20px';
-    dialog.style.borderRadius = '10px';
-    dialog.style.boxShadow = '0 0 10px rgba(0, 0, 0, 0.1)';
-    dialog.style.zIndex = '1000';
-    dialog.style.width = '80%';
-    dialog.style.height = '80%';
-    dialog.style.overflow = 'auto';
-
-    let closeButton = document.createElement('button');
-    closeButton.innerText = '閉じる';
-    closeButton.style.position = 'absolute';
-    closeButton.style.top = '10px';
-    closeButton.style.right = '10px';
-    closeButton.onclick = () => document.body.removeChild(dialog);
-
-    let content = document.createElement('div');
-    content.innerHTML = htmlContent;
-
-    dialog.appendChild(closeButton);
-    dialog.appendChild(content);
-
-    document.body.appendChild(dialog);
-}
