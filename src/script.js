@@ -27,7 +27,7 @@ function submitCredentials() {
     let username = document.getElementById('username').value;
     let password = document.getElementById('password').value;
 
-    fetch('../netlify/functions/proxy.js', {
+    fetch('/.netlify/functions/proxy', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
