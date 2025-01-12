@@ -7,17 +7,24 @@ exports.handler = async (event) => {
                 body: JSON.stringify({ popup: true })
             };
         } else if (body.url) {
-            const response = await fetch(body.url);
-            const data = await response.text();
-            return {
-                statusCode: 200,
-                body: JSON.stringify({ message: 'Successful!', data: data })
-            };
+            try {
+                const response = await fetch(body.url);
+                const data = await response.text();
+                return {
+                    statusCode: 200,
+                    body: JSON.stringify({ success: true, data: data })
+                };
+            } catch (error) {
+                return {
+                    statusCode: 500,
+                    body: JSON.stringify({ success: false, error: error.message })
+                };
+            }
         }
     }
 
     return {
         statusCode: 400,
-        body: JSON.stringify({ message: 'invalid' })
+        body: JSON.stringify({ success: false, message: 'Invalid request' })
     };
 };
