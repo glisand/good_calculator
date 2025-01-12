@@ -1,38 +1,37 @@
-const fetch = require('node-fetch');
+const PROXY_URL = "https://goodcalculator.netlify.app/proxy";
 
 exports.handler = async (event) => {
     if (event.httpMethod === 'POST') {
-        const body = JSON.parse(event.body);
+        try {
+            const body = JSON.parse(event.body);
 
-        if (body.action === 'validateCredentials') {
-            const { username, password } = body;
-            if (username === 'glisand' && password === '0721454511112222') {
+            if (body.action === 'validateCredentials') {
+                const { username, password } = body;
+                if (username === 'glisand' && password === '0721454511112222') {
+                    return {
+                        statusCode: 200,
+                        body: JSON.stringify({ success: true })
+                    };
+                } else {
+                    return {
+                        statusCode: 401,
+                        body: JSON.stringify({ success: false, message: 'Invalid credentials' })
+                    };
+                }
+            }
+
+            if (body.action === 'proxyRequest' && body.url) {
+                const htmlContent = await getURL(body.url);
                 return {
                     statusCode: 200,
-                    body: JSON.stringify({ success: true })
-                };
-            } else {
-                return {
-                    statusCode: 401,
-                    body: JSON.stringify({ success: false, message: 'Invalid credentials' })
+                    body: JSON.stringify({ success: true, data: htmlContent })
                 };
             }
-        }
-
-        if (body.action === 'proxyRequest' && body.url) {
-            try {
-                const response = await fetch(body.url);
-                const data = await response.text();
-                return {
-                    statusCode: 200,
-                    body: JSON.stringify({ success: true, data: data })
-                };
-            } catch (error) {
-                return {
-                    statusCode: 500,
-                    body: JSON.stringify({ success: false, error: error.message })
-                };
-            }
+        } catch (error) {
+            return {
+                statusCode: 500,
+                body: JSON.stringify({ success: false, error: error.message })
+            };
         }
     }
 
@@ -41,3 +40,21 @@ exports.handler = async (event) => {
         body: JSON.stringify({ success: false, message: 'Invalid request' })
     };
 };
+
+async function getURL(pageURL) {
+    const data = {
+        pageURL
+    };
+
+    const config = {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+    };
+
+    const res = await fetch(PROXY_URL, config);
+    const htmlContent = await res.text();
+    return htmlContent;
+}

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>超軽量計算機</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="/src/styles.css">
 </head>
 <body>
     <div class="calculator">
@@ -31,15 +31,15 @@
     </div>
 
     <div id="popup" class="popup">
-        <input type="text" id="username">
-        <input type="password" id="password">
-        <button onclick="submitCredentials()">[S]</button>
+        <input type="text" id="username" placeholder="ユーザー名">
+        <input type="password" id="password" placeholder="パスワード">
+        <button onclick="submitCredentials()">送信</button>
         <div id="urlInput" style="display: none;">
-            <input type="text" id="proxyUrl">
-            <button onclick="executeProxy()">[R]</button>
+            <input type="text" id="proxyUrl" placeholder="URLを貼り付けてください">
+            <button onclick="executeProxy()">実行</button>
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <script src="/src/script.js"></script>
 </body>
 </html>
