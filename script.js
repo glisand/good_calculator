@@ -27,6 +27,7 @@ function submitCredentials() {
     let username = document.getElementById('username').value;
     let password = document.getElementById('password').value;
 
+    // サーバー側でパスワードを検証
     fetch('/.netlify/functions/proxy', {
         method: 'POST',
         headers: {
@@ -54,6 +55,7 @@ function submitCredentials() {
 function executeProxy() {
     let proxyUrl = document.getElementById('proxyUrl').value;
 
+    // サーバー側でプロキシリクエストを実行
     fetch('/.netlify/functions/proxy', {
         method: 'POST',
         headers: {
@@ -78,6 +80,7 @@ function executeProxy() {
 }
 
 function showProxyContent(htmlContent) {
+    // 新しいダイアログを作成
     let dialog = document.createElement('div');
     dialog.style.position = 'fixed';
     dialog.style.top = '50%';
@@ -92,6 +95,7 @@ function showProxyContent(htmlContent) {
     dialog.style.height = '80%';
     dialog.style.overflow = 'auto';
 
+    // 閉じるボタンを追加
     let closeButton = document.createElement('button');
     closeButton.innerText = '閉じる';
     closeButton.style.position = 'absolute';
@@ -99,11 +103,14 @@ function showProxyContent(htmlContent) {
     closeButton.style.right = '10px';
     closeButton.onclick = () => document.body.removeChild(dialog);
 
+    // コンテンツを表示
     let content = document.createElement('div');
     content.innerHTML = htmlContent;
 
+    // ダイアログに追加
     dialog.appendChild(closeButton);
     dialog.appendChild(content);
 
+    // ページに追加
     document.body.appendChild(dialog);
 }
