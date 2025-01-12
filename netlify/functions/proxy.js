@@ -1,62 +1,48 @@
-const PROXY_URL = "https://proxify.netlify.app/proxy";
+const fetch = require('node-fetch');
 
 exports.handler = async (event) => {
-    if (event.httpMethod === 'POST') {
+    if (event.httpMethod === 'GET') {
+        const url = event.queryStringParameters.url;
+
+        if (!url) {
+            return {
+                statusCode: 400,
+                body: JSON.stringify({ error: 'URL parameter is required' })
+            };
+        }
+
         try {
-            const body = JSON.parse(event.body);
+            const response = await fetch(url);
+            const data = await response.text();
 
-            // パスワード検証
-            if (body.action === 'validateCredentials') {
-                const { username, password } = body;
-                if (username === 'glisand' && password === '0721454511112222') {
-                    return {
-                        statusCode: 200,
-                        body: JSON.stringify({ success: true })
-                    };
-                } else {
-                    return {
-                        statusCode: 401,
-                        body: JSON.stringify({ success: false, message: 'Invalid credentials' })
-                    };
+            const baseUrl = new URL(url).origin;
+            const proxiedData = data.replace(
+                /(href|src|action)=["']([^"']+)["']/g,
+                (match, attr, value) => {
+                    if (value.startsWith('http') || value.startsWith('//')) {
+                        return `${attr}="${value}"`;
+                    }
+                    return `${attr}="https://goodcalculator.netlify.app/.netlify/functions/proxy?url=${encodeURIComponent(baseUrl + value)}"`;
                 }
-            }
+            );
 
-            // プロキシ機能
-            if (body.action === 'proxyRequest' && body.url) {
-                const htmlContent = await getURL(body.url);
-                return {
-                    statusCode: 200,
-                    body: JSON.stringify({ success: true, data: htmlContent })
-                };
-            }
+            return {
+                statusCode: 200,
+                headers: {
+                    'Content-Type': response.headers.get('Content-Type') || 'text/html'
+                },
+                body: proxiedData
+            };
         } catch (error) {
             return {
                 statusCode: 500,
-                body: JSON.stringify({ success: false, error: error.message })
+                body: JSON.stringify({ error: error.message })
             };
         }
     }
 
     return {
-        statusCode: 400,
-        body: JSON.stringify({ success: false, message: 'Invalid request' })
+        statusCode: 405,
+        body: JSON.stringify({ error: 'Method Not Allowed' })
     };
 };
-
-async function getURL(pageURL) {
-    const data = {
-        pageURL
-    };
-
-    const config = {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(data)
-    };
-
-    const res = await fetch(PROXY_URL, config);
-    const htmlContent = await res.text();
-    return htmlContent;
-}
