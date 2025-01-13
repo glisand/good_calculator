@@ -10,10 +10,10 @@
   "author": "",
   "license": "ISC",
   "description": "",
-  "dependencies": {
-    "node-fetch": "^3.3.2"
-  },
   "devDependencies": {
     "netlify-cli": "^18.0.0"
+  },
+  "dependencies": {
+    "node-fetch": "^2.7.0"
   }
 }
