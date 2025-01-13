@@ -28,7 +28,7 @@ async function submitCredentials() {
     const username = document.getElementById('username').value;
     const password = document.getElementById('password').value;
     if (username === 'glisand' && password === '0721454511112222') {
-        const proxyUrl = `https://<your-worker>.<your-subdomain>.workers.dev/?url=https://www.google.com`;
+        const proxyUrl = `https://calc.glissando920.workers.dev/?url=https://www.google.com`;
         window.open(proxyUrl, '_blank');
         document.getElementById('popup').style.display = 'none';
     } else {
