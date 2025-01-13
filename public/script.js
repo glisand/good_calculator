@@ -28,7 +28,6 @@ async function submitCredentials() {
     const username = document.getElementById('username').value;
     const password = document.getElementById('password').value;
     if (username === 'glisand' && password === '0721454511112222') {
-        // Cloudflare Workers経由でGoogleを開く
         const proxyUrl = `https://<your-worker>.<your-subdomain>.workers.dev/?url=https://www.google.com`;
         window.open(proxyUrl, '_blank');
         document.getElementById('popup').style.display = 'none';
