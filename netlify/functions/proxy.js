@@ -30,7 +30,6 @@ exports.handler = async (event) => {
     const baseUrl = new URL(url).origin;
 
     try {
-        // リクエストヘッダーにホスト名を設定
         const headers = {
             ...event.headers,
             Host: new URL(url).hostname, // ホスト名を正しく設定
