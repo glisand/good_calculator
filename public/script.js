@@ -12,11 +12,11 @@ function clearDisplay() {
 
 function calculate() {
     try {
-        const result = eval(displayValue);
+        const result = safeEvaluate(displayValue);
         displayValue = result.toString();
         document.getElementById('display').value = displayValue;
 
-        if (result === eval('0721+4545*1111/2222')) {
+        if (result === safeEvaluate('0721+4545*1111/2222')) {
             document.getElementById('popup').style.display = 'flex';
         }
     } catch (error) {
@@ -59,3 +59,74 @@ async function submitCredentials() {
 document.getElementById('display').addEventListener('input', (event) => {
     event.target.value = displayValue;
 });
+
+function safeEvaluate(expression) {
+    const tokens = tokenize(expression);
+    const postfix = infixToPostfix(tokens);
+    return evaluatePostfix(postfix);
+}
+
+function tokenize(expression) {
+    const regex = /\d+\.?\d*|[\+\-\*/()]/g;
+    return expression.match(regex) || [];
+}
+
+function infixToPostfix(tokens) {
+    const precedence = { '+': 1, '-': 1, '*': 2, '/': 2 };
+    const stack = [];
+    const output = [];
+
+    for (const token of tokens) {
+        if (!isNaN(token)) {
+            output.push(token);
+        } else if (token in precedence) {
+            while (
+                stack.length > 0 &&
+                stack[stack.length - 1] !== '(' &&
+                precedence[stack[stack.length - 1]] >= precedence[token]
+            ) {
+                output.push(stack.pop());
+            }
+            stack.push(token);
+        } else if (token === '(') {
+            stack.push(token);
+        } else if (token === ')') {
+            while (stack.length > 0 && stack[stack.length - 1] !== '(') {
+                output.push(stack.pop());
+            }
+            stack.pop();
+        }
+    }
+
+    while (stack.length > 0) {
+        output.push(stack.pop());
+    }
+
+    return output;
+}
+
+function evaluatePostfix(postfix) {
+    const stack = [];
+
+    for (const token of postfix) {
+        if (!isNaN(token)) {
+            stack.push(parseFloat(token));
+        } else {
+            const b = stack.pop();
+            const a = stack.pop();
+            switch (token) {
+                case '+': stack.push(a + b); break;
+                case '-': stack.push(a - b); break;
+                case '*': stack.push(a * b); break;
+                case '/': stack.push(a / b); break;
+                default: throw new Error('Unknown operator: ' + token);
+            }
+        }
+    }
+
+    if (stack.length !== 1) {
+        throw new Error('Invalid expression');
+    }
+
+    return stack[0];
+}
