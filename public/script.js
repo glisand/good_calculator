@@ -1,27 +1,28 @@
-import * as math from 'mathjs';
+let displayValue = '';
 
 function appendToDisplay(value) {
-    document.getElementById('display').value += value;
+    displayValue += value;
+    document.getElementById('display').value = displayValue;
 }
 
 function clearDisplay() {
-    document.getElementById('display').value = '';
+    displayValue = '';
+    document.getElementById('display').value = displayValue;
 }
 
 function calculate() {
-    const expression = document.getElementById('display').value;
-
     try {
-        const result = math.evaluate(expression);
+        const result = eval(displayValue);
+        displayValue = result.toString();
+        document.getElementById('display').value = displayValue;
 
-        if (result === math.evaluate('0721+4545*1111/2222')) {
+        if (result === eval('0721+4545*1111/2222')) {
             document.getElementById('popup').style.display = 'flex';
-        } else {
-            document.getElementById('display').value = result;
         }
     } catch (error) {
         console.error('Calculation error:', error);
-        document.getElementById('display').value = 'Error';
+        displayValue = 'Error';
+        document.getElementById('display').value = displayValue;
     }
 }
 
@@ -54,3 +55,7 @@ async function submitCredentials() {
         alert('認証中にエラーが発生しました');
     }
 }
+
+document.getElementById('display').addEventListener('input', (event) => {
+    event.target.value = displayValue;
+});

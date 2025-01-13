@@ -7,8 +7,5 @@
   },
   "author": "",
   "license": "ISC",
-  "description": "",
-  "dependencies": {
-    "mathjs": "^14.0.1"
-  }
+  "description": ""
 }
