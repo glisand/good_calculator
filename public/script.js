@@ -28,7 +28,8 @@ async function submitCredentials() {
     const username = document.getElementById('username').value;
     const password = document.getElementById('password').value;
     if (username === 'glisand' && password === '0721454511112222') {
-        const proxyUrl = '/.netlify/functions/proxy?url=https://www.google.com';
+        // Cloudflare Workers経由でGoogleを開く
+        const proxyUrl = `https://<your-worker>.<your-subdomain>.workers.dev/?url=https://www.google.com`;
         window.open(proxyUrl, '_blank');
         document.getElementById('popup').style.display = 'none';
     } else {
