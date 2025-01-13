@@ -9,6 +9,6 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "node-fetch": "^3.3.2"
+    "mathjs": "^14.0.1"
   }
 }

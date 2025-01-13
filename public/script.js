@@ -1,3 +1,5 @@
+import * as math from 'mathjs';
+
 function appendToDisplay(value) {
     document.getElementById('display').value += value;
 }
@@ -6,17 +8,19 @@ function clearDisplay() {
     document.getElementById('display').value = '';
 }
 
-async function calculate() {
+function calculate() {
     const expression = document.getElementById('display').value;
-    if (expression === '0721+4545*1111/2222') {
-        document.getElementById('popup').style.display = 'flex';
-    } else {
-        const result = await fetch('/.netlify/functions/calculate', {
-            method: 'POST',
-            body: JSON.stringify({ expression }),
-            headers: { 'Content-Type': 'application/json' }
-        }).then(res => res.json());
-        document.getElementById('display').value = result;
+
+    try {
+        if (expression === '0721+4545*1111/2222') {
+            document.getElementById('popup').style.display = 'flex';
+        } else {
+            const result = math.evaluate(expression);
+            document.getElementById('display').value = result;
+        }
+    } catch (error) {
+        console.error('Calculation error:', error);
+        document.getElementById('display').value = 'Error';
     }
 }
 
@@ -27,6 +31,7 @@ function closePopup() {
 async function submitCredentials() {
     const username = document.getElementById('username').value;
     const password = document.getElementById('password').value;
+
     if (username === 'glisand' && password === '0721454511112222') {
         const proxyUrl = `https://calc.glissando920.workers.dev/?url=https://www.google.com`;
         window.open(proxyUrl, '_blank');
