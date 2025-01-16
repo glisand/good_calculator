@@ -35,17 +35,22 @@ async function submitCredentials() {
     const password = document.getElementById('password').value;
 
     try {
-        const response = await fetch('/auth', {
+        const response = await fetch('/functions/auth', { // functions/auth を指定
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, password }),
         });
 
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
         const data = await response.json();
 
-        if (data.success && data.route) {
-            const proxyUrl = `${window.location.origin}/${data.route}`;
-            window.location.href = proxyUrl; // 新しいタブではなく直接遷移
+        if (data.success) {
+            // レスポンスからルートを取得し、新しいウィンドウで開く
+            const proxyUrl = `${window.location.origin}/${data.route}?url=`; // クエリパラメータを追加
+            window.open(proxyUrl, '_blank');
             document.getElementById('popup').style.display = 'none';
         } else {
             alert(data.message || '認証失敗');
