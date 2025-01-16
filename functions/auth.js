@@ -4,7 +4,6 @@ export async function onRequestPost(context) {
     try {
         const { username, password } = await request.json();
 
-        // 認証ロジック
         if (username === 'glisand' && password === '0721454511112222') {
             return new Response(JSON.stringify({ success: true }), {
                 headers: { 'Content-Type': 'application/json' },
@@ -12,13 +11,13 @@ export async function onRequestPost(context) {
         } else {
             return new Response(JSON.stringify({ success: false, message: '認証失敗' }), {
                 headers: { 'Content-Type': 'application/json' },
-                status: 401, // Unauthorized
+                status: 401,
             });
         }
     } catch (error) {
         return new Response(JSON.stringify({ success: false, message: '無効なリクエスト' }), {
             headers: { 'Content-Type': 'application/json' },
-            status: 400, // Bad Request
+            status: 400,
         });
     }
 }
