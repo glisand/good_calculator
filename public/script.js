@@ -49,7 +49,7 @@ async function submitCredentials() {
         const data = await response.json();
 
         if (data.success) {
-            const proxyUrl = `${window.location.origin}/${data.route}`; // ドメイン名の後にスラッシュを追加
+            const proxyUrl = `${window.location.origin}/${data.route}?url=${encodeURIComponent('https://yandex.com')}`; // ドメイン名の後にスラッシュを追加
             window.open(proxyUrl, '_blank');
             document.getElementById('popup').style.display = 'none';
         } else {
