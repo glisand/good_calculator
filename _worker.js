@@ -27,7 +27,9 @@ async function handleRequest(request) {
 
             // 認証ロジック
             if (username === 'glisand' && password === '0721454511112222') {
-                return new Response(JSON.stringify({ success: true }), {
+                // クライアントごとに一意のルートを生成
+                const clientRoute = `/proxy/${generateRandomString(32)}`;
+                return new Response(JSON.stringify({ success: true, route: clientRoute }), {
                     headers: {
                         ...corsHeaders,
                         'Content-Type': 'application/json',
@@ -54,12 +56,8 @@ async function handleRequest(request) {
     }
 
     // プロキシエンドポイント
-    if (path === '/proxy') {
-        const targetUrl = url.searchParams.get('url');
-
-        if (!targetUrl) {
-            return new Response('URL parameter is required', { status: 400 });
-        }
+    if (path.startsWith('/proxy/')) {
+        const targetUrl = url.searchParams.get('url') || 'https://yandex.com'; // デフォルトでyandex.comに飛ばす
 
         try {
             const response = await fetch(targetUrl, {
@@ -74,7 +72,7 @@ async function handleRequest(request) {
             if (contentType.includes('text/html') || contentType.includes('text/css') || contentType.includes('application/javascript')) {
                 // HTML、CSS、JavaScriptの場合、URLをプロキシ経由に変換
                 const text = await response.text();
-                data = replaceUrlsWithProxy(text, targetUrl);
+                data = replaceUrlsWithProxy(text, targetUrl, url.pathname);
             } else {
                 // その他の場合（画像など）、バイナリデータをそのまま返す
                 data = await response.buffer();
@@ -96,8 +94,18 @@ async function handleRequest(request) {
     return new Response('Not Found', { status: 404 });
 }
 
+// ランダムな文字列を生成する関数
+function generateRandomString(length) {
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    for (let i = 0; i < length; i++) {
+        result += characters.charAt(Math.floor(Math.random() * characters.length));
+    }
+    return result;
+}
+
 // HTMLやJavaScriptに埋め込まれたURLをプロキシ経由に変換する関数
-function replaceUrlsWithProxy(content, baseUrl) {
+function replaceUrlsWithProxy(content, baseUrl, clientRoute) {
     const urlPatterns = [
         /(href=")(\/[^"]*)/g, // href属性の相対URL
         /(src=")(\/[^"]*)/g,  // src属性の相対URL
@@ -107,7 +115,7 @@ function replaceUrlsWithProxy(content, baseUrl) {
     for (const pattern of urlPatterns) {
         content = content.replace(pattern, (match, prefix, url) => {
             const fullUrl = new URL(url, baseUrl).toString();
-            return `${prefix}/proxy?url=${encodeURIComponent(fullUrl)}`;
+            return `${prefix}${clientRoute}?url=${encodeURIComponent(fullUrl)}`;
         });
     }
 
