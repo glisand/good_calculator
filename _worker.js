@@ -6,30 +6,25 @@ async function handleRequest(request) {
     const url = new URL(request.url);
     const path = url.pathname;
 
-    // CORSヘッダーを設定
     const corsHeaders = {
-        'Access-Control-Allow-Origin': '*', // すべてのオリジンを許可（本番環境では特定のオリジンを指定することを推奨）
-        'Access-Control-Allow-Methods': 'POST, OPTIONS', // 許可するHTTPメソッド
-        'Access-Control-Allow-Headers': 'Content-Type', // 許可するヘッダー
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
     };
 
-    // OPTIONSプリフライトリクエストに対応
     if (request.method === 'OPTIONS') {
         return new Response(null, {
             headers: corsHeaders,
         });
     }
 
-    // 認証エンドポイント
     if (path === '/auth' && request.method === 'POST') {
         try {
             const { username, password } = await request.json();
 
-            // 認証ロジック
             if (username === 'glisand' && password === '0721454511112222') {
-                // クライアントごとに一意のルートを生成
-                const clientRoute = `proxy/${generateUUID()}`; // UUIDを使用
-                return new Response(JSON.stringify({ success: true, route: clientRoute }), {
+                const authToken = btoa(`${username}:${password}`);
+                return new Response(JSON.stringify({ success: true, key: authToken }), {
                     headers: {
                         ...corsHeaders,
                         'Content-Type': 'application/json',
@@ -41,7 +36,7 @@ async function handleRequest(request) {
                         ...corsHeaders,
                         'Content-Type': 'application/json',
                     },
-                    status: 401, // Unauthorized
+                    status: 401,
                 });
             }
         } catch (error) {
@@ -50,14 +45,23 @@ async function handleRequest(request) {
                     ...corsHeaders,
                     'Content-Type': 'application/json',
                 },
-                status: 400, // Bad Request
+                status: 400,
             });
         }
     }
 
-    // プロキシエンドポイント
-    if (path.startsWith('/proxy/')) {
-        const targetUrl = 'https://yandex.com'; // デフォルトでyandex.comに飛ばす
+    if (path.startsWith('/proxy')) {
+        const targetUrl = new URL(request.url).searchParams.get('url');
+        const authToken = new URL(request.url).searchParams.get('key');
+
+        if (!targetUrl || !authToken) {
+            return new Response('URL and Key parameters are required', { status: 400 });
+        }
+
+        const decodedAuth = atob(authToken);
+        if (decodedAuth !== 'glisand:0721454511112222') {
+            return new Response('Unauthorized', { status: 401 });
+        }
 
         try {
             const response = await fetch(targetUrl, {
@@ -66,56 +70,14 @@ async function handleRequest(request) {
                 body: request.method === 'POST' ? await request.text() : undefined,
             });
 
-            const contentType = response.headers.get('content-type') || '';
-            let data;
-
-            if (contentType.includes('text/html') || contentType.includes('text/css') || contentType.includes('application/javascript')) {
-                // HTML、CSS、JavaScriptの場合、URLをプロキシ経由に変換
-                const text = await response.text();
-                data = replaceUrlsWithProxy(text, targetUrl, path);
-            } else {
-                // その他の場合（画像など）、バイナリデータをそのまま返す
-                data = await response.buffer();
-            }
-
-            return new Response(data, {
+            return new Response(response.body, {
                 status: response.status,
-                headers: {
-                    ...response.headers,
-                    'Content-Type': contentType,
-                },
+                headers: response.headers,
             });
         } catch (error) {
             return new Response('Internal Server Error', { status: 500 });
         }
     }
 
-    // その他のリクエストは404を返す
     return new Response('Not Found', { status: 404 });
-}
-
-// UUIDを生成する関数
-function generateUUID() {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-        const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
-        return v.toString(16);
-    });
-}
-
-// HTMLやJavaScriptに埋め込まれたURLをプロキシ経由に変換する関数
-function replaceUrlsWithProxy(content, baseUrl, clientRoute) {
-    const urlPatterns = [
-        /(href=")(\/[^"]*)/g, // href属性の相対URL
-        /(src=")(\/[^"]*)/g,  // src属性の相対URL
-        /(url\()([^)]*)/g,    // CSSのurl()内のURL
-    ];
-
-    for (const pattern of urlPatterns) {
-        content = content.replace(pattern, (match, prefix, url) => {
-            const fullUrl = new URL(url, baseUrl).toString();
-            return `${prefix}${clientRoute}?url=${encodeURIComponent(fullUrl)}`;
-        });
-    }
-
-    return content;
 }
