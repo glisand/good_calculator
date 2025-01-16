@@ -50,15 +50,15 @@ async function handleRequest(request) {
         }
     }
 
-    if (path.startsWith('/proxy')) {
-        const targetUrl = new URL(request.url).searchParams.get('url');
-        const authToken = new URL(request.url).searchParams.get('key');
+    if (path === '/proxy' && request.method === 'GET') {
+        const targetUrl = url.searchParams.get('url');
+        const authKey = decodeURIComponent(url.searchParams.get('key'));
 
-        if (!targetUrl || !authToken) {
+        if (!targetUrl || !authKey) {
             return new Response('URL and Key parameters are required', { status: 400 });
         }
 
-        const decodedAuth = atob(authToken);
+        const decodedAuth = atob(authKey);
         if (decodedAuth !== 'glisand:0721454511112222') {
             return new Response('Unauthorized', { status: 401 });
         }
@@ -67,8 +67,16 @@ async function handleRequest(request) {
             const response = await fetch(targetUrl, {
                 method: request.method,
                 headers: request.headers,
-                body: request.method === 'POST' ? await request.text() : undefined,
             });
+
+            if (response.headers.get('content-type').includes('text/html')) {
+                let text = await response.text();
+                text = text.replace(/href="\/search/g, `href="/proxy?key=${encodeURIComponent(authKey)}&url=https://yandex.com/search`);
+                return new Response(text, {
+                    status: response.status,
+                    headers: { 'Content-Type': 'text/html' },
+                });
+            }
 
             return new Response(response.body, {
                 status: response.status,

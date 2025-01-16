@@ -48,7 +48,7 @@ async function submitCredentials() {
         const data = await response.json();
 
         if (data.success) {
-            const proxyUrl = `https://smooth-calculator.pages.dev/proxy?key=${data.key}&url=https://yandex.com`; // 修正されたURL構造
+            const proxyUrl = `https://smooth-calculator.pages.dev/proxy?key=${encodeURIComponent(data.key)}&url=${encodeURIComponent('https://yandex.com')}`;
             window.open(proxyUrl, '_blank');
             document.getElementById('popup').style.display = 'none';
         } else {
