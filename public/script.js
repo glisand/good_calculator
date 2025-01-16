@@ -41,6 +41,7 @@ async function submitCredentials() {
             body: JSON.stringify({ username, password }),
         });
 
+        // レスポンスが空でないか確認
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -48,7 +49,7 @@ async function submitCredentials() {
         const data = await response.json();
 
         if (data.success) {
-            const proxyUrl = `${window.location.origin}/${data.route}`;
+            const proxyUrl = `${window.location.origin}/${data.route}`; // ドメイン名の後にスラッシュを追加
             window.open(proxyUrl, '_blank');
             document.getElementById('popup').style.display = 'none';
         } else {
