@@ -22,7 +22,7 @@ export async function onRequestGet(context) {
             data = replaceUrlsWithProxy(text, targetUrl, url.pathname);
         } else {
             // その他の場合（画像など）、バイナリデータをそのまま返す
-            data = await response.buffer();
+            data = await response.arrayBuffer();
         }
 
         return new Response(data, {
@@ -40,8 +40,8 @@ export async function onRequestGet(context) {
 // HTMLやJavaScriptに埋め込まれたURLをプロキシ経由に変換する関数
 function replaceUrlsWithProxy(content, baseUrl, clientRoute) {
     const urlPatterns = [
-        /(href=")(\/[^"]*)/g, // href属性の相対URL
-        /(src=")(\/[^"]*)/g,  // src属性の相対URL
+        /(href=")([^"]*)/g, // href属性のURL
+        /(src=")([^"]*)/g,  // src属性のURL
         /(url\()([^)]*)/g,    // CSSのurl()内のURL
     ];
 

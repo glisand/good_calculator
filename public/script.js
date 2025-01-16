@@ -61,7 +61,6 @@ async function submitCredentials() {
     }
 }
 
-
 document.getElementById('display').addEventListener('input', (event) => {
     event.target.value = displayValue;
 });
