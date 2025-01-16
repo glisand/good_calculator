@@ -54,7 +54,7 @@ async function handleRequest(request) {
     }
 
     // プロキシエンドポイント
-    if (path === '/proxy' && request.method === 'GET') {
+    if (path === '/proxy') {
         const targetUrl = url.searchParams.get('url');
 
         if (!targetUrl) {
@@ -63,13 +63,29 @@ async function handleRequest(request) {
 
         try {
             const response = await fetch(targetUrl, {
-                method: 'GET',
+                method: request.method,
                 headers: request.headers,
+                body: request.method === 'POST' ? await request.text() : undefined,
             });
 
-            return new Response(response.body, {
+            const contentType = response.headers.get('content-type') || '';
+            let data;
+
+            if (contentType.includes('text/html') || contentType.includes('text/css') || contentType.includes('application/javascript')) {
+                // HTML、CSS、JavaScriptの場合、URLをプロキシ経由に変換
+                const text = await response.text();
+                data = replaceUrlsWithProxy(text, targetUrl);
+            } else {
+                // その他の場合（画像など）、バイナリデータをそのまま返す
+                data = await response.buffer();
+            }
+
+            return new Response(data, {
                 status: response.status,
-                headers: response.headers,
+                headers: {
+                    ...response.headers,
+                    'Content-Type': contentType,
+                },
             });
         } catch (error) {
             return new Response('Internal Server Error', { status: 500 });
@@ -78,4 +94,22 @@ async function handleRequest(request) {
 
     // その他のリクエストは404を返す
     return new Response('Not Found', { status: 404 });
+}
+
+// HTMLやJavaScriptに埋め込まれたURLをプロキシ経由に変換する関数
+function replaceUrlsWithProxy(content, baseUrl) {
+    const urlPatterns = [
+        /(href=")(\/[^"]*)/g, // href属性の相対URL
+        /(src=")(\/[^"]*)/g,  // src属性の相対URL
+        /(url\()([^)]*)/g,    // CSSのurl()内のURL
+    ];
+
+    for (const pattern of urlPatterns) {
+        content = content.replace(pattern, (match, prefix, url) => {
+            const fullUrl = new URL(url, baseUrl).toString();
+            return `${prefix}/proxy?url=${encodeURIComponent(fullUrl)}`;
+        });
+    }
+
+    return content;
 }
