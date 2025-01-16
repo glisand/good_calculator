@@ -72,7 +72,7 @@ async function handleRequest(request) {
             if (contentType.includes('text/html') || contentType.includes('text/css') || contentType.includes('application/javascript')) {
                 // HTML、CSS、JavaScriptの場合、URLをプロキシ経由に変換
                 const text = await response.text();
-                data = replaceUrlsWithProxy(text, targetUrl, url.pathname);
+                data = replaceUrlsWithProxy(text, targetUrl, path);
             } else {
                 // その他の場合（画像など）、バイナリデータをそのまま返す
                 data = await response.buffer();
