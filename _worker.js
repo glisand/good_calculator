@@ -28,7 +28,7 @@ async function handleRequest(request) {
             // 認証ロジック
             if (username === 'glisand' && password === '0721454511112222') {
                 // クライアントごとに一意のルートを生成
-                const clientRoute = `/proxy/${generateRandomString(32)}`;
+                const clientRoute = `proxy/${generateRandomString(32)}`; // スラッシュを追加
                 return new Response(JSON.stringify({ success: true, route: clientRoute }), {
                     headers: {
                         ...corsHeaders,
