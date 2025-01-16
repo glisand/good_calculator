@@ -6,22 +6,26 @@ async function handleRequest(request) {
     const url = new URL(request.url);
     const path = url.pathname;
 
+    // CORSヘッダーを設定
     const corsHeaders = {
         'Access-Control-Allow-Origin': '*', // すべてのオリジンを許可（本番環境では特定のオリジンを指定することを推奨）
         'Access-Control-Allow-Methods': 'POST, OPTIONS', // 許可するHTTPメソッド
         'Access-Control-Allow-Headers': 'Content-Type', // 許可するヘッダー
     };
 
+    // OPTIONSプリフライトリクエストに対応
     if (request.method === 'OPTIONS') {
         return new Response(null, {
             headers: corsHeaders,
         });
     }
 
+    // 認証エンドポイント
     if (path === '/auth' && request.method === 'POST') {
         try {
             const { username, password } = await request.json();
 
+            // 認証ロジック
             if (username === 'glisand' && password === '0721454511112222') {
                 return new Response(JSON.stringify({ success: true }), {
                     headers: {
@@ -49,6 +53,7 @@ async function handleRequest(request) {
         }
     }
 
+    // プロキシエンドポイント
     if (path === '/proxy' && request.method === 'GET') {
         const targetUrl = url.searchParams.get('url');
 
@@ -71,5 +76,6 @@ async function handleRequest(request) {
         }
     }
 
+    // その他のリクエストは404を返す
     return new Response('Not Found', { status: 404 });
 }

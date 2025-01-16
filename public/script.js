@@ -41,6 +41,11 @@ async function submitCredentials() {
             body: JSON.stringify({ username, password }),
         });
 
+        // レスポンスが空でないか確認
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
         const data = await response.json();
 
         if (data.success) {
