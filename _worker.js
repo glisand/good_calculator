@@ -57,7 +57,7 @@ async function handleRequest(request) {
 
     // プロキシエンドポイント
     if (path.startsWith('/proxy/')) {
-        const targetUrl = url.searchParams.get('url') || 'https://yandex.com'; // デフォルトでyandex.comに飛ばす
+        const targetUrl = 'https://yandex.com'; // デフォルトでyandex.comに飛ばす
 
         try {
             const response = await fetch(targetUrl, {

@@ -49,7 +49,7 @@ async function submitCredentials() {
         const data = await response.json();
 
         if (data.success) {
-            const proxyUrl = `${window.location.origin}${data.route}?url=https://yandex.com`; // デフォルトでyandex.comに飛ばす
+            const proxyUrl = `${window.location.origin}${data.route}`; // クライアントごとのルートを使用
             window.open(proxyUrl, '_blank');
             document.getElementById('popup').style.display = 'none';
         } else {
