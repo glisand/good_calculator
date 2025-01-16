@@ -35,7 +35,7 @@ async function submitCredentials() {
     const password = document.getElementById('password').value;
 
     try {
-        const response = await fetch('https://keisan.glissando920.workers.dev/auth', {
+        const response = await fetch('/auth', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, password }),
@@ -44,7 +44,7 @@ async function submitCredentials() {
         const data = await response.json();
 
         if (data.success) {
-            const proxyUrl = `https://calc.glissando920.workers.dev/?url=https://www.google.com`;
+            const proxyUrl = `/proxy?url=https://www.google.com`;
             window.open(proxyUrl, '_blank');
             document.getElementById('popup').style.display = 'none';
         } else {
