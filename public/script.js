@@ -35,12 +35,13 @@ async function submitCredentials() {
     const password = document.getElementById('password').value;
 
     try {
-        const response = await fetch('/functions/auth', { // functions/auth を指定
+        const response = await fetch('/auth', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, password }),
         });
 
+        // レスポンスが空でないか確認
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -48,8 +49,7 @@ async function submitCredentials() {
         const data = await response.json();
 
         if (data.success) {
-            // レスポンスからルートを取得し、新しいウィンドウで開く
-            const proxyUrl = `${window.location.origin}/${data.route}?url=`; // クエリパラメータを追加
+            const proxyUrl = `${window.location.origin}/${data.route}`; // ドメイン名の後にスラッシュを追加
             window.open(proxyUrl, '_blank');
             document.getElementById('popup').style.display = 'none';
         } else {
