@@ -57,7 +57,11 @@ async function handleRequest(request) {
 
     // プロキシエンドポイント
     if (path.startsWith('/proxy')) {
-        const targetUrl = 'https://yandex.com'; // デフォルトでyandex.comに飛ばす
+        const targetUrl = url.searchParams.get('url');
+
+        if (!targetUrl) {
+            return new Response('URL parameter is required', { status: 400 });
+        }
 
         try {
             const response = await fetch(targetUrl, {
