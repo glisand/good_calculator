@@ -5,7 +5,12 @@ export async function onRequestPost(context) {
         const { username, password } = await request.json();
 
         if (username === 'glisand' && password === '0721454511112222') {
-            return new Response(JSON.stringify({ success: true }), {
+            // ユニークなルートを生成
+            const route = generateUniqueRoute(username);
+            return new Response(JSON.stringify({ 
+                success: true,
+                route: `proxy/${route}` // プロキシルートを返す
+            }), {
                 headers: { 'Content-Type': 'application/json' },
             });
         } else {
@@ -20,4 +25,9 @@ export async function onRequestPost(context) {
             status: 400,
         });
     }
+}
+
+function generateUniqueRoute(username) {
+    // 簡単なハッシュ生成（実際の実装ではもっと安全な方法を使用してください）
+    return Buffer.from(username + Date.now()).toString('base64').replace(/[/+=]/g, '');
 }
