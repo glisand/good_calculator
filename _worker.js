@@ -28,7 +28,7 @@ async function handleRequest(request) {
             // 認証ロジック
             if (username === 'glisand' && password === '0721454511112222') {
                 // クライアントごとに一意のルートを生成
-                const clientRoute = `proxy/${generateRandomString(32)}`; // スラッシュを追加
+                const clientRoute = `proxy/${generateUUID()}`; // UUIDを使用
                 return new Response(JSON.stringify({ success: true, route: clientRoute }), {
                     headers: {
                         ...corsHeaders,
@@ -94,14 +94,12 @@ async function handleRequest(request) {
     return new Response('Not Found', { status: 404 });
 }
 
-// ランダムな文字列を生成する関数
-function generateRandomString(length) {
-    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let result = '';
-    for (let i = 0; i < length; i++) {
-        result += characters.charAt(Math.floor(Math.random() * characters.length));
-    }
-    return result;
+// UUIDを生成する関数
+function generateUUID() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
 }
 
 // HTMLやJavaScriptに埋め込まれたURLをプロキシ経由に変換する関数
