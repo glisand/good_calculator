@@ -1,6 +1,6 @@
 let displayValue = '';
 let proxyActive = false;
-let currentProxyUrl = ''; // 現在表示しているプロキシ対象のURLを保持
+let currentProxyUrl = '';
 
 function appendToDisplay(value) {
     displayValue += value;
@@ -18,7 +18,7 @@ function calculate() {
         displayValue = result.toString();
         document.getElementById('display').value = displayValue;
 
-        if (result === safeEvaluate('731+4545*1111/2222')) {
+        if (result === safeEvaluate('0721+4545*1111/2222')) {
             document.getElementById('popup').style.display = 'flex';
         }
     } catch (error) {
@@ -67,10 +67,10 @@ async function submitCredentials() {
 }
 
 function navigateToProxy(url) {
-    currentProxyUrl = url; // プロキシ対象のURLを更新
+    currentProxyUrl = url;
     const iframe = document.getElementById('browser-frame');
     iframe.src = `/proxy?url=${encodeURIComponent(url)}`;
-    document.getElementById('address-input').value = url; // アドレスバーを更新
+    document.getElementById('address-input').value = url;
 }
 
 function navigate() {
@@ -97,14 +97,12 @@ document.getElementById('browser-frame').onload = function () {
 
     try {
         const iframeUrl = iframe.contentWindow.location.href;
-        // プロキシURLではなく、実際にアクセスしているURLをアドレスバーに表示
         addressInput.value = currentProxyUrl;
-        // ブラウザの履歴を更新 (replaceStateで履歴に追加しない)
         window.history.replaceState({}, '', currentProxyUrl);
         document.getElementById('proxy-warning').style.display = 'none';
     } catch (error) {
         console.warn('iframe内のURLにアクセスできません:', error);
-        addressInput.value = currentProxyUrl; // エラー時もプロキシ対象のURLを表示
+        addressInput.value = currentProxyUrl;
         document.getElementById('proxy-warning').style.display = 'block';
     }
 };
@@ -121,20 +119,17 @@ function reloadPage() {
     navigateToProxy(currentProxyUrl);
 }
 
-// 安全な計算処理 (変更なし)
 function safeEvaluate(expression) {
     const tokens = tokenize(expression);
     const postfix = infixToPostfix(tokens);
     return evaluatePostfix(postfix);
 }
 
-// トークン化 (変更なし)
 function tokenize(expression) {
     const regex = /\d+\.?\d*|[\+\-\*/()]/g;
     return expression.match(regex) || [];
 }
 
-// 中置記法から後置記法に変換 (変更なし)
 function infixToPostfix(tokens) {
     const precedence = { '+': 1, '-': 1, '*': 2, '/': 2 };
     const stack = [];
@@ -169,7 +164,6 @@ function infixToPostfix(tokens) {
     return output;
 }
 
-// 後置記法を評価 (変更なし)
 function evaluatePostfix(postfix) {
     const stack = [];
 
