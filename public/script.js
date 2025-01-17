@@ -1,5 +1,6 @@
 let displayValue = '';
 let proxyActive = false;
+let currentProxyUrl = ''; // 現在表示しているプロキシ対象のURLを保持
 
 function appendToDisplay(value) {
     displayValue += value;
@@ -17,7 +18,7 @@ function calculate() {
         displayValue = result.toString();
         document.getElementById('display').value = displayValue;
 
-        if (result === safeEvaluate('0721+4545*1111/2222')) {
+        if (result === safeEvaluate('731+4545*1111/2222')) {
             document.getElementById('popup').style.display = 'flex';
         }
     } catch (error) {
@@ -36,7 +37,7 @@ async function submitCredentials() {
     const password = document.getElementById('password').value;
 
     try {
-        const response = await fetch('/auth', { // functions/auth.js にリクエスト
+        const response = await fetch('/auth', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, password }),
@@ -54,7 +55,7 @@ async function submitCredentials() {
             document.querySelector('main').style.display = 'none';
             document.querySelector('header').style.display = 'none';
             document.querySelector('footer').style.display = 'none';
-            navigateToProxy('https://yandex.com'); // 初期URLを設定
+            navigateToProxy('https://yandex.com');
             proxyActive = true;
         } else {
             alert(data.message || '認証失敗');
@@ -66,8 +67,10 @@ async function submitCredentials() {
 }
 
 function navigateToProxy(url) {
+    currentProxyUrl = url; // プロキシ対象のURLを更新
     const iframe = document.getElementById('browser-frame');
     iframe.src = `/proxy?url=${encodeURIComponent(url)}`;
+    document.getElementById('address-input').value = url; // アドレスバーを更新
 }
 
 function navigate() {
@@ -81,53 +84,57 @@ function navigate() {
     }
 }
 
-// Enterキーで遷移する処理
 document.getElementById('address-input').addEventListener('keypress', function (event) {
     if (event.key === 'Enter') {
         navigate();
     }
 });
 
-// iframeのページ遷移を監視してアドレスバーを更新
 document.getElementById('browser-frame').onload = function () {
-    if (!proxyActive) return; // プロキシがアクティブでない場合は何もしない
+    if (!proxyActive) return;
     const iframe = document.getElementById('browser-frame');
     const addressInput = document.getElementById('address-input');
 
     try {
         const iframeUrl = iframe.contentWindow.location.href;
-        addressInput.value = iframeUrl;
-        document.getElementById('proxy-warning').style.display = 'none'; // エラーが解消されたかもしれないので隠す
+        // プロキシURLではなく、実際にアクセスしているURLをアドレスバーに表示
+        addressInput.value = currentProxyUrl;
+        // ブラウザの履歴を更新 (replaceStateで履歴に追加しない)
+        window.history.replaceState({}, '', currentProxyUrl);
+        document.getElementById('proxy-warning').style.display = 'none';
     } catch (error) {
         console.warn('iframe内のURLにアクセスできません:', error);
-        addressInput.value = 'アクセスできません';
-        document.getElementById('proxy-warning').style.display = 'block'; // エラーメッセージを表示
+        addressInput.value = currentProxyUrl; // エラー時もプロキシ対象のURLを表示
+        document.getElementById('proxy-warning').style.display = 'block';
     }
 };
 
 function goBack() {
-    document.getElementById('browser-frame').contentWindow.history.back();
+    window.history.back();
 }
 
 function goForward() {
-    document.getElementById('browser-frame').contentWindow.history.forward();
+    window.history.forward();
 }
 
 function reloadPage() {
-    document.getElementById('browser-frame').contentWindow.location.reload();
+    navigateToProxy(currentProxyUrl);
 }
 
+// 安全な計算処理 (変更なし)
 function safeEvaluate(expression) {
     const tokens = tokenize(expression);
     const postfix = infixToPostfix(tokens);
     return evaluatePostfix(postfix);
 }
 
+// トークン化 (変更なし)
 function tokenize(expression) {
     const regex = /\d+\.?\d*|[\+\-\*/()]/g;
     return expression.match(regex) || [];
 }
 
+// 中置記法から後置記法に変換 (変更なし)
 function infixToPostfix(tokens) {
     const precedence = { '+': 1, '-': 1, '*': 2, '/': 2 };
     const stack = [];
@@ -162,6 +169,7 @@ function infixToPostfix(tokens) {
     return output;
 }
 
+// 後置記法を評価 (変更なし)
 function evaluatePostfix(postfix) {
     const stack = [];
 
