@@ -62,26 +62,57 @@ async function submitCredentials() {
 
 function navigateToProxy() {
     const iframe = document.getElementById('browser-frame');
-    iframe.src = '/proxy';
+    iframe.src = '/proxy'; // デフォルトで/proxyにアクセス
 }
 
 function navigate() {
     const addressInput = document.getElementById('address-input');
-    const iframe = document.getElementById('browser-frame');
-    iframe.src = `/proxy?url=${encodeURIComponent(addressInput.value)}`;
+    const url = addressInput.value.trim();
+
+    if (url) {
+        const iframe = document.getElementById('browser-frame');
+        iframe.src = `/proxy?url=${encodeURIComponent(url)}`;
+    } else {
+        alert('URLを入力してください');
+    }
 }
 
+// Enterキーで遷移する処理
+document.getElementById('address-input').addEventListener('keypress', function (event) {
+    if (event.key === 'Enter') {
+        navigate();
+    }
+});
+
+// iframeのページ遷移を監視してアドレスバーを更新
+document.getElementById('browser-frame').onload = function () {
+    const iframe = document.getElementById('browser-frame');
+    const addressInput = document.getElementById('address-input');
+
+    try {
+        // iframe内のURLを取得してアドレスバーに反映
+        const iframeUrl = iframe.contentWindow.location.href;
+        addressInput.value = iframeUrl;
+    } catch (error) {
+        // CORS制約によりiframe内のURLにアクセスできない場合のエラーハンドリング
+        console.warn('iframe内のURLにアクセスできません:', error);
+    }
+};
+
+// 安全な計算処理
 function safeEvaluate(expression) {
     const tokens = tokenize(expression);
     const postfix = infixToPostfix(tokens);
     return evaluatePostfix(postfix);
 }
 
+// トークン化
 function tokenize(expression) {
     const regex = /\d+\.?\d*|[\+\-\*/()]/g;
     return expression.match(regex) || [];
 }
 
+// 中置記法から後置記法に変換
 function infixToPostfix(tokens) {
     const precedence = { '+': 1, '-': 1, '*': 2, '/': 2 };
     const stack = [];
@@ -116,6 +147,7 @@ function infixToPostfix(tokens) {
     return output;
 }
 
+// 後置記法を評価
 function evaluatePostfix(postfix) {
     const stack = [];
 
