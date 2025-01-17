@@ -1,73 +1,71 @@
 let displayValue = '';
 let proxyActive = false;
-let currentProxyUrl = '';
+let currentUrl = 'https://yandex.com';
 
 function appendToDisplay(value) {
-    displayValue += value;
-    document.getElementById('display').value = displayValue;
+    const display = document.getElementById('display');
+    display.value += value;
 }
 
 function clearDisplay() {
-    displayValue = '';
-    document.getElementById('display').value = displayValue;
+    const display = document.getElementById('display');
+    display.value = '';
 }
 
 function calculate() {
-    try {
-        const result = safeEvaluate(displayValue);
-        displayValue = result.toString();
-        document.getElementById('display').value = displayValue;
+    const display = document.getElementById('display');
+    const expression = display.value;
 
-        if (result === safeEvaluate('0721+4545*1111/2222')) {
-            document.getElementById('popup').style.display = 'flex';
+    if (expression === '0731+4545*1111/2222') {
+        openPopup();
+    } else {
+        try {
+            display.value = eval(expression);
+        } catch (error) {
+            display.value = 'Error';
         }
-    } catch (error) {
-        console.error('Calculation error:', error);
-        displayValue = 'Error';
-        document.getElementById('display').value = displayValue;
     }
 }
 
+function openPopup() {
+    const popup = document.getElementById('popup');
+    popup.style.display = 'flex';
+}
+
 function closePopup() {
-    document.getElementById('popup').style.display = 'none';
+    const popup = document.getElementById('popup');
+    popup.style.display = 'none';
 }
 
 async function submitCredentials() {
     const username = document.getElementById('username').value;
     const password = document.getElementById('password').value;
 
-    try {
-        const response = await fetch('/auth', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password }),
-        });
+    const response = await fetch('/auth', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, password }),
+    });
 
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
+    const result = await response.json();
 
-        const data = await response.json();
-
-        if (data.success) {
-            document.getElementById('popup').style.display = 'none';
-            document.getElementById('virtual-browser').style.display = 'flex';
-            document.querySelector('main').style.display = 'none';
-            document.querySelector('header').style.display = 'none';
-            document.querySelector('footer').style.display = 'none';
-            navigateToProxy('https://yandex.com');
-            proxyActive = true;
-        } else {
-            alert(data.message || '認証失敗');
-        }
-    } catch (error) {
-        console.error('認証エラー:', error);
-        alert('認証中にエラーが発生しました');
+    if (result.success) {
+        closePopup();
+        openVirtualBrowser();
+    } else {
+        alert('認証失敗');
     }
 }
 
-function navigateToProxy(url) {
-    currentProxyUrl = url;
+function openVirtualBrowser() {
+    const virtualBrowser = document.getElementById('virtual-browser');
+    virtualBrowser.style.display = 'flex';
+    navigateTo(currentUrl);
+}
+
+function navigateTo(url) {
     const iframe = document.getElementById('browser-frame');
     iframe.src = `/proxy?url=${encodeURIComponent(url)}`;
     document.getElementById('address-input').value = url;
@@ -75,48 +73,26 @@ function navigateToProxy(url) {
 
 function navigate() {
     const addressInput = document.getElementById('address-input');
-    const url = addressInput.value.trim();
-
+    const url = addressInput.value;
     if (url) {
-        navigateToProxy(url);
-    } else {
-        alert('URLを入力してください');
+        currentUrl = url;
+        navigateTo(url);
     }
 }
 
-document.getElementById('address-input').addEventListener('keypress', function (event) {
-    if (event.key === 'Enter') {
-        navigate();
-    }
-});
-
-document.getElementById('browser-frame').onload = function () {
-    if (!proxyActive) return;
-    const iframe = document.getElementById('browser-frame');
-    const addressInput = document.getElementById('address-input');
-
-    try {
-        const iframeUrl = iframe.contentWindow.location.href;
-        addressInput.value = currentProxyUrl;
-        window.history.replaceState({}, '', currentProxyUrl);
-        document.getElementById('proxy-warning').style.display = 'none';
-    } catch (error) {
-        console.warn('iframe内のURLにアクセスできません:', error);
-        addressInput.value = currentProxyUrl;
-        document.getElementById('proxy-warning').style.display = 'block';
-    }
-};
-
 function goBack() {
-    window.history.back();
+    const iframe = document.getElementById('browser-frame');
+    iframe.contentWindow.history.back();
 }
 
 function goForward() {
-    window.history.forward();
+    const iframe = document.getElementById('browser-frame');
+    iframe.contentWindow.history.forward();
 }
 
 function reloadPage() {
-    navigateToProxy(currentProxyUrl);
+    const iframe = document.getElementById('browser-frame');
+    iframe.contentWindow.location.reload();
 }
 
 function safeEvaluate(expression) {
