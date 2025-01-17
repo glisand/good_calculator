@@ -37,12 +37,11 @@ export async function onRequestGet(context) {
     }
 }
 
-// HTMLやJavaScriptに埋め込まれたURLをプロキシ経由に変換する関数
 function replaceUrlsWithProxy(content, baseUrl, clientRoute) {
     const urlPatterns = [
-        /(href=")([^"]*)/g, // href属性のURL
-        /(src=")([^"]*)/g,  // src属性のURL
-        /(url\()([^)]*)/g,    // CSSのurl()内のURL
+        /(href=")([^"]*)/g,
+        /(src=")([^"]*)/g,
+        /(url\()([^)]*)/g,
     ];
 
     for (const pattern of urlPatterns) {

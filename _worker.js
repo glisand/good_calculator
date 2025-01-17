@@ -31,28 +31,30 @@ async function handleRequest(request) {
 
     // プロキシエンドポイント
     if (path === '/proxy') {
-        const targetUrl = url.searchParams.get('url') || 'https://yandex.com'; // デフォルトでyandex.comにアクセス
-
+        const targetUrl = url.searchParams.get('url') || 'https://yandex.com';
+    
         try {
             const response = await fetch(targetUrl, {
                 method: request.method,
-                headers: request.headers,
+                headers: {
+                    ...request.headers,
+                    'Access-Control-Allow-Origin': '*', // CORSの設定
+                },
                 body: request.method === 'POST' ? await request.text() : undefined,
             });
-
+    
             const contentType = response.headers.get('content-type') || '';
             let data;
-
+    
             if (contentType.includes('text/html')) {
                 const text = await response.text();
-                // <base>タグを追加して相対URLを正しく解決
                 const baseTag = `<base href="${targetUrl}">`;
                 const rewrittenHTML = text.replace(/<head>/, `<head>${baseTag}`);
                 data = rewrittenHTML;
             } else {
                 data = await response.buffer();
             }
-
+    
             return new Response(data, {
                 status: response.status,
                 headers: {
@@ -63,7 +65,7 @@ async function handleRequest(request) {
         } catch (error) {
             return new Response('Internal Server Error', { status: 500 });
         }
-    }
+    }    
 
     // その他のリクエストは404を返す
     return new Response('Not Found', { status: 404 });

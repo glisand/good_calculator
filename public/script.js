@@ -16,7 +16,7 @@ function calculate() {
         displayValue = result.toString();
         document.getElementById('display').value = displayValue;
 
-        if (result === safeEvaluate('0721+4545*1111/2222')) {
+        if (displayValue === '0731') {
             document.getElementById('popup').style.display = 'flex';
         }
     } catch (error) {
@@ -25,6 +25,7 @@ function calculate() {
         document.getElementById('display').value = displayValue;
     }
 }
+
 
 function closePopup() {
     document.getElementById('popup').style.display = 'none';
