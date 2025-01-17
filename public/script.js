@@ -16,7 +16,7 @@ function calculate() {
     const display = document.getElementById('display');
     const expression = display.value;
 
-    if (expression === '0731+4545*1111/2222') {
+    if (expression === '0721+4545*1111/2222') {
         openPopup();
     } else {
         try {
