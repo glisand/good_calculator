@@ -1,4 +1,3 @@
-// functions/proxy.js
 export async function onRequestGet(context) {
     const { request } = context;
     const url = new URL(request.url);
@@ -12,10 +11,9 @@ export async function onRequestGet(context) {
         const response = await fetch(targetUrl, {
             method: 'GET',
             headers: request.headers,
-            redirect: 'manual', // リダイレクトを手動で処理
+            redirect: 'manual',
         });
 
-        // リダイレクトの処理
         if (response.status >= 300 && response.status < 400 && response.headers.has('location')) {
             const redirectUrl = response.headers.get('location');
             const resolvedRedirectUrl = new URL(redirectUrl, targetUrl).toString();
@@ -27,21 +25,19 @@ export async function onRequestGet(context) {
 
         if (contentType.includes('text/html')) {
             const text = await response.text();
-            // <base> タグを挿入して相対パスを解決
             const baseTag = `<base href="${targetUrl}">`;
             data = text.replace('<head>', `<head>${baseTag}`);
         } else {
             data = await response.arrayBuffer();
         }
 
+        const headers = new Headers(response.headers);
+        headers.delete('X-Frame-Options');
+        headers.delete('Content-Security-Policy');
+
         return new Response(data, {
             status: response.status,
-            headers: {
-                ...response.headers,
-                'Content-Type': contentType,
-                // CSP を削除して iframe 内での表示を許可するリスクを認識した上で設定
-                'Content-Security-Policy': '',
-            },
+            headers: headers,
         });
     } catch (error) {
         console.error("Proxy Error:", error);
