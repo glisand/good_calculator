@@ -43,7 +43,7 @@ async function handleRequest(request) {
             const contentType = response.headers.get('content-type') || '';
             let data;
 
-            if (contentType.includes('text/html') || contentType.includes('text/css') || contentType.includes('application/javascript')) {
+            if (contentType.includes('text/html')) {
                 const text = await response.text();
                 data = replaceUrlsWithProxy(text, targetUrl);
             } else {

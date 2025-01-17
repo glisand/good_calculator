@@ -62,7 +62,7 @@ async function submitCredentials() {
 
 function navigateToProxy() {
     const iframe = document.getElementById('browser-frame');
-    iframe.src = '/proxy'; // デフォルトで/proxyにアクセス
+    iframe.src = '/proxy?url=https://yandex.com'; // デフォルトでyandex.comにアクセス
 }
 
 function navigate() {
