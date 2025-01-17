@@ -1,4 +1,5 @@
 let displayValue = '';
+let proxyActive = false;
 
 function appendToDisplay(value) {
     displayValue += value;
@@ -16,7 +17,8 @@ function calculate() {
         displayValue = result.toString();
         document.getElementById('display').value = displayValue;
 
-        if (result === safeEvaluate('0721+4545*1111/2222')) {
+        // 隠しコマンドの条件を修正 (文字列ではなく数値で比較)
+        if (result === safeEvaluate('731+4545*1111/2222')) {
             document.getElementById('popup').style.display = 'flex';
         }
     } catch (error) {
@@ -35,7 +37,7 @@ async function submitCredentials() {
     const password = document.getElementById('password').value;
 
     try {
-        const response = await fetch('/auth', {
+        const response = await fetch('/auth', { // functions/auth.js にリクエスト
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, password }),
@@ -49,8 +51,12 @@ async function submitCredentials() {
 
         if (data.success) {
             document.getElementById('popup').style.display = 'none';
-            document.getElementById('virtual-browser').style.display = 'block';
-            navigateToProxy();
+            document.getElementById('virtual-browser').style.display = 'flex';
+            document.querySelector('main').style.display = 'none';
+            document.querySelector('header').style.display = 'none';
+            document.querySelector('footer').style.display = 'none';
+            navigateToProxy('https://yandex.com'); // 初期URLを設定
+            proxyActive = true;
         } else {
             alert(data.message || '認証失敗');
         }
@@ -60,9 +66,9 @@ async function submitCredentials() {
     }
 }
 
-function navigateToProxy() {
+function navigateToProxy(url) {
     const iframe = document.getElementById('browser-frame');
-    iframe.src = '/proxy?url=https://yandex.com'; // デフォルトでyandex.comにアクセス
+    iframe.src = `/proxy?url=${encodeURIComponent(url)}`;
 }
 
 function navigate() {
@@ -70,8 +76,7 @@ function navigate() {
     const url = addressInput.value.trim();
 
     if (url) {
-        const iframe = document.getElementById('browser-frame');
-        iframe.src = `/proxy?url=${encodeURIComponent(url)}`;
+        navigateToProxy(url);
     } else {
         alert('URLを入力してください');
     }
@@ -86,33 +91,44 @@ document.getElementById('address-input').addEventListener('keypress', function (
 
 // iframeのページ遷移を監視してアドレスバーを更新
 document.getElementById('browser-frame').onload = function () {
+    if (!proxyActive) return; // プロキシがアクティブでない場合は何もしない
     const iframe = document.getElementById('browser-frame');
     const addressInput = document.getElementById('address-input');
 
     try {
-        // iframe内のURLを取得してアドレスバーに反映
         const iframeUrl = iframe.contentWindow.location.href;
         addressInput.value = iframeUrl;
+        document.getElementById('proxy-warning').style.display = 'none'; // エラーが解消されたかもしれないので隠す
     } catch (error) {
-        // CORS制約によりiframe内のURLにアクセスできない場合のエラーハンドリング
         console.warn('iframe内のURLにアクセスできません:', error);
+        addressInput.value = 'アクセスできません';
+        document.getElementById('proxy-warning').style.display = 'block'; // エラーメッセージを表示
     }
 };
 
-// 安全な計算処理
+function goBack() {
+    document.getElementById('browser-frame').contentWindow.history.back();
+}
+
+function goForward() {
+    document.getElementById('browser-frame').contentWindow.history.forward();
+}
+
+function reloadPage() {
+    document.getElementById('browser-frame').contentWindow.location.reload();
+}
+
 function safeEvaluate(expression) {
     const tokens = tokenize(expression);
     const postfix = infixToPostfix(tokens);
     return evaluatePostfix(postfix);
 }
 
-// トークン化
 function tokenize(expression) {
     const regex = /\d+\.?\d*|[\+\-\*/()]/g;
     return expression.match(regex) || [];
 }
 
-// 中置記法から後置記法に変換
 function infixToPostfix(tokens) {
     const precedence = { '+': 1, '-': 1, '*': 2, '/': 2 };
     const stack = [];
@@ -136,7 +152,7 @@ function infixToPostfix(tokens) {
             while (stack.length > 0 && stack[stack.length - 1] !== '(') {
                 output.push(stack.pop());
             }
-            stack.pop(); // '('を削除
+            stack.pop();
         }
     }
 
@@ -147,7 +163,6 @@ function infixToPostfix(tokens) {
     return output;
 }
 
-// 後置記法を評価
 function evaluatePostfix(postfix) {
     const stack = [];
 

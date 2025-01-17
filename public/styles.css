@@ -106,13 +106,25 @@ footer {
   height: 100%;
   background-color: white;
   z-index: 1000;
+  display: none; /* 初期状態で非表示にする */
+  flex-direction: column; /* 縦方向に要素を並べる */
+}
+
+.browser-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    background-color: #f1f1f1;
+    border-bottom: 1px solid #ccc;
+}
+
+.navigation-buttons button {
+    margin-right: 5px;
 }
 
 .address-bar {
   display: flex;
-  padding: 10px;
-  background-color: #f1f1f1;
-  border-bottom: 1px solid #ccc;
 }
 
 #address-input {
@@ -123,6 +135,6 @@ footer {
 
 #browser-frame {
   width: 100%;
-  height: calc(100% - 50px);
+  height: calc(100% - 90px); /* ヘッダーと警告メッセージの高さ分を引く */
   border: none;
 }

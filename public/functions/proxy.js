@@ -1,3 +1,4 @@
+// functions/proxy.js
 export async function onRequestGet(context) {
     const { request } = context;
     const url = new URL(request.url);
@@ -11,14 +12,24 @@ export async function onRequestGet(context) {
         const response = await fetch(targetUrl, {
             method: 'GET',
             headers: request.headers,
+            redirect: 'manual', // リダイレクトを手動で処理
         });
+
+        // リダイレクトの処理
+        if (response.status >= 300 && response.status < 400 && response.headers.has('location')) {
+            const redirectUrl = response.headers.get('location');
+            const resolvedRedirectUrl = new URL(redirectUrl, targetUrl).toString();
+            return Response.redirect(`/proxy?url=${encodeURIComponent(resolvedRedirectUrl)}`, 302);
+        }
 
         const contentType = response.headers.get('content-type') || '';
         let data;
 
         if (contentType.includes('text/html')) {
             const text = await response.text();
-            data = replaceUrlsWithProxy(text, targetUrl, url.pathname);
+            // <base> タグを挿入して相対パスを解決
+            const baseTag = `<base href="${targetUrl}">`;
+            data = text.replace('<head>', `<head>${baseTag}`);
         } else {
             data = await response.arrayBuffer();
         }
@@ -28,27 +39,12 @@ export async function onRequestGet(context) {
             headers: {
                 ...response.headers,
                 'Content-Type': contentType,
+                // CSP を削除して iframe 内での表示を許可するリスクを認識した上で設定
+                'Content-Security-Policy': '',
             },
         });
     } catch (error) {
-        return new Response('Internal Server Error', { status: 500 });
+        console.error("Proxy Error:", error);
+        return new Response('プロキシエラーが発生しました', { status: 500 });
     }
-}
-
-// HTMLやJavaScriptに埋め込まれたURLをプロキシ経由に変換する関数
-function replaceUrlsWithProxy(content, baseUrl, clientRoute) {
-    const urlPatterns = [
-        /(href=")([^"]*)/g, // href属性のURL
-        /(src=")([^"]*)/g,  // src属性のURL
-        /(url\()([^)]*)/g,    // CSSのurl()内のURL
-    ];
-
-    for (const pattern of urlPatterns) {
-        content = content.replace(pattern, (match, prefix, url) => {
-            const fullUrl = new URL(url, baseUrl).toString();
-            return `${prefix}${clientRoute}?url=${encodeURIComponent(fullUrl)}`;
-        });
-    }
-
-    return content;
 }

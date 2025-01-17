@@ -5,7 +5,7 @@ export async function onRequestPost(context) {
         const { username, password } = await request.json();
 
         if (username === 'glisand' && password === '0721454511112222') {
-            return new Response(JSON.stringify({ success: true, route: 'proxy' }), {
+            return new Response(JSON.stringify({ success: true }), {
                 headers: { 'Content-Type': 'application/json' },
             });
         } else {

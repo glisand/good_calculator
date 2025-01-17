@@ -49,11 +49,21 @@
     </div>
 
     <div id="virtual-browser" class="virtual-browser" style="display: none;">
-        <div class="address-bar">
-            <input type="text" id="address-input" placeholder="URLを入力">
-            <button onclick="navigate()">移動</button>
+        <div class="browser-header">
+            <div class="navigation-buttons">
+                <button onclick="goBack()">戻る</button>
+                <button onclick="goForward()">進む</button>
+                <button onclick="reloadPage()">再読み込み</button>
+            </div>
+            <div class="address-bar">
+                <input type="text" id="address-input" placeholder="URLを入力">
+                <button onclick="navigate()">移動</button>
+            </div>
         </div>
         <iframe id="browser-frame" src="about:blank"></iframe>
+        <p id="proxy-warning" style="color: red; display: none;">
+            一部のウェブサイトは、セキュリティ設定によりこの仮想ブラウザ内で正常に動作しない場合があります。
+        </p>
     </div>
 
     <script src="script.js"></script>
