@@ -41,7 +41,6 @@ async function submitCredentials() {
             body: JSON.stringify({ username, password }),
         });
 
-        // レスポンスが空でないか確認
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -49,9 +48,9 @@ async function submitCredentials() {
         const data = await response.json();
 
         if (data.success) {
-            const proxyUrl = `${window.location.origin}/${data.route}?url=${encodeURIComponent('https://yandex.com')}`; // ドメイン名の後にスラッシュを追加
-            window.open(proxyUrl, '_blank');
             document.getElementById('popup').style.display = 'none';
+            document.getElementById('virtual-browser').style.display = 'block';
+            navigateToProxy();
         } else {
             alert(data.message || '認証失敗');
         }
@@ -61,9 +60,16 @@ async function submitCredentials() {
     }
 }
 
-document.getElementById('display').addEventListener('input', (event) => {
-    event.target.value = displayValue;
-});
+function navigateToProxy() {
+    const iframe = document.getElementById('browser-frame');
+    iframe.src = '/proxy';
+}
+
+function navigate() {
+    const addressInput = document.getElementById('address-input');
+    const iframe = document.getElementById('browser-frame');
+    iframe.src = `/proxy?url=${encodeURIComponent(addressInput.value)}`;
+}
 
 function safeEvaluate(expression) {
     const tokens = tokenize(expression);

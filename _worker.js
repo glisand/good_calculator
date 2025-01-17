@@ -6,62 +6,32 @@ async function handleRequest(request) {
     const url = new URL(request.url);
     const path = url.pathname;
 
-    // CORSヘッダーを設定
-    const corsHeaders = {
-        'Access-Control-Allow-Origin': '*', // すべてのオリジンを許可（本番環境では特定のオリジンを指定することを推奨）
-        'Access-Control-Allow-Methods': 'POST, OPTIONS', // 許可するHTTPメソッド
-        'Access-Control-Allow-Headers': 'Content-Type', // 許可するヘッダー
-    };
-
-    // OPTIONSプリフライトリクエストに対応
-    if (request.method === 'OPTIONS') {
-        return new Response(null, {
-            headers: corsHeaders,
-        });
-    }
-
     // 認証エンドポイント
     if (path === '/auth' && request.method === 'POST') {
         try {
             const { username, password } = await request.json();
 
-            // 認証ロジック
             if (username === 'glisand' && password === '0721454511112222') {
-                // 固定のプロキシルートを設定
-                const clientRoute = `proxy`;
-                return new Response(JSON.stringify({ success: true, route: clientRoute }), {
-                    headers: {
-                        ...corsHeaders,
-                        'Content-Type': 'application/json',
-                    },
+                return new Response(JSON.stringify({ success: true }), {
+                    headers: { 'Content-Type': 'application/json' },
                 });
             } else {
                 return new Response(JSON.stringify({ success: false, message: '認証失敗' }), {
-                    headers: {
-                        ...corsHeaders,
-                        'Content-Type': 'application/json',
-                    },
-                    status: 401, // Unauthorized
+                    headers: { 'Content-Type': 'application/json' },
+                    status: 401,
                 });
             }
         } catch (error) {
             return new Response(JSON.stringify({ success: false, message: '無効なリクエスト' }), {
-                headers: {
-                    ...corsHeaders,
-                    'Content-Type': 'application/json',
-                },
-                status: 400, // Bad Request
+                headers: { 'Content-Type': 'application/json' },
+                status: 400,
             });
         }
     }
 
     // プロキシエンドポイント
-    if (path.startsWith('/proxy')) {
-        const targetUrl = url.searchParams.get('url');
-
-        if (!targetUrl) {
-            return new Response('URL parameter is required', { status: 400 });
-        }
+    if (path === '/proxy') {
+        const targetUrl = url.searchParams.get('url') || 'https://yandex.com';
 
         try {
             const response = await fetch(targetUrl, {
@@ -74,12 +44,10 @@ async function handleRequest(request) {
             let data;
 
             if (contentType.includes('text/html') || contentType.includes('text/css') || contentType.includes('application/javascript')) {
-                // HTML、CSS、JavaScriptの場合、URLをプロキシ経由に変換
                 const text = await response.text();
-                data = replaceUrlsWithProxy(text, targetUrl, path);
+                data = replaceUrlsWithProxy(text, targetUrl);
             } else {
-                // その他の場合（画像など）、バイナリデータをそのまま返す
-                data = await response.arrayBuffer();
+                data = await response.buffer();
             }
 
             return new Response(data, {
@@ -98,18 +66,17 @@ async function handleRequest(request) {
     return new Response('Not Found', { status: 404 });
 }
 
-// HTMLやJavaScriptに埋め込まれたURLをプロキシ経由に変換する関数
-function replaceUrlsWithProxy(content, baseUrl, clientRoute) {
+function replaceUrlsWithProxy(content, baseUrl) {
     const urlPatterns = [
-        /(href=")([^"]*)/g, // href属性のURL
-        /(src=")([^"]*)/g,  // src属性のURL
-        /(url\()([^)]*)/g,    // CSSのurl()内のURL
+        /(href=")(\/[^"]*)/g,
+        /(src=")(\/[^"]*)/g,
+        /(url\()([^)]*)/g,
     ];
 
     for (const pattern of urlPatterns) {
         content = content.replace(pattern, (match, prefix, url) => {
             const fullUrl = new URL(url, baseUrl).toString();
-            return `${prefix}${clientRoute}?url=${encodeURIComponent(fullUrl)}`;
+            return `${prefix}/proxy?url=${encodeURIComponent(fullUrl)}`;
         });
     }
 

@@ -1,14 +1,11 @@
->>index.html
 <!DOCTYPE html>
 <html lang="ja">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>超軽量計算機</title>
     <link rel="stylesheet" href="styles.css">
 </head>
-
 <body>
     <header>
         <h1>超軽量計算機</h1>
@@ -45,13 +42,20 @@
     <div id="popup" class="popup">
         <div class="popup-content">
             <span class="close" onclick="closePopup()">&times;</span>
-            <input type="text" id="username">
-            <input type="password" id="password">
+            <input type="text" id="username" placeholder="ユーザー名">
+            <input type="password" id="password" placeholder="パスワード">
             <button onclick="submitCredentials()">ログイン</button>
         </div>
     </div>
 
+    <div id="virtual-browser" class="virtual-browser" style="display: none;">
+        <div class="address-bar">
+            <input type="text" id="address-input" placeholder="URLを入力">
+            <button onclick="navigate()">移動</button>
+        </div>
+        <iframe id="browser-frame" src="about:blank"></iframe>
+    </div>
+
     <script src="script.js"></script>
 </body>
-
 </html>
