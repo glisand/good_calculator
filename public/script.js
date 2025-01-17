@@ -1,97 +1,102 @@
 let displayValue = '';
 let proxyActive = false;
-let currentUrl = 'https://yandex.com';
+let currentProxyUrl = '';
+
+let virtualBrowser = document.getElementById('virtual-browser');
+let iframe = document.getElementById('browser-frame');
+let addressInput = document.getElementById('address-input');
+
 
 function appendToDisplay(value) {
-    const display = document.getElementById('display');
-    display.value += value;
-}
+    displayValue += value;
+    document.getElementById('display').value = displayValue;
+}    
 
 function clearDisplay() {
-    const display = document.getElementById('display');
-    display.value = '';
-}
+    displayValue = '';
+    document.getElementById('display').value = displayValue;
+}    
 
 function calculate() {
-    const display = document.getElementById('display');
-    const expression = display.value;
+    try {
+        const result = safeEvaluate(displayValue);
+        displayValue = result.toString();
+        document.getElementById('display').value = displayValue;
 
-    if (expression === '0721+4545*1111/2222') {
-        openPopup();
-    } else {
-        try {
-            display.value = eval(expression);
-        } catch (error) {
-            display.value = 'Error';
-        }
-    }
-}
-
-function openPopup() {
-    const popup = document.getElementById('popup');
-    popup.style.display = 'flex';
-}
+        if (result === safeEvaluate('0721+4545*1111/2222')) {
+            document.getElementById('popup').style.display = 'flex';
+        }    
+    } catch (error) {
+        console.error('Calculation error:', error);
+        displayValue = 'Error';
+        document.getElementById('display').value = displayValue;
+    }    
+}    
 
 function closePopup() {
-    const popup = document.getElementById('popup');
-    popup.style.display = 'none';
-}
+    document.getElementById('popup').style.display = 'none';
+}    
 
 async function submitCredentials() {
     const username = document.getElementById('username').value;
     const password = document.getElementById('password').value;
 
-    const response = await fetch('/auth', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username, password }),
-    });
+    try {
+        const response = await fetch('/auth', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password }),
+        });    
 
-    const result = await response.json();
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }    
 
-    if (result.success) {
-        closePopup();
-        openVirtualBrowser();
-    } else {
-        alert('認証失敗');
-    }
-}
+        const data = await response.json();
 
-function openVirtualBrowser() {
-    const virtualBrowser = document.getElementById('virtual-browser');
-    virtualBrowser.style.display = 'flex';
-    navigateTo(currentUrl);
-}
+        if (data.success) {
+            document.getElementById('popup').style.display = 'none';
+            document.getElementById('virtual-browser').style.display = 'flex';
+            document.querySelector('main').style.display = 'none';
+            document.querySelector('header').style.display = 'none';
+            document.querySelector('footer').style.display = 'none';
+            navigateToProxy('https://yandex.com');
+            proxyActive = true;
+        } else {
+            alert(data.message || '認証失敗');
+        }    
+    } catch (error) {
+        console.error('認証エラー:', error);
+        alert('認証中にエラーが発生しました');
+    }    
+}    
 
-function navigateTo(url) {
+function navigateToProxy(url) {
+    currentProxyUrl = url;
     const iframe = document.getElementById('browser-frame');
     iframe.src = `/proxy?url=${encodeURIComponent(url)}`;
     document.getElementById('address-input').value = url;
-}
+}    
 
 function navigate() {
-    const addressInput = document.getElementById('address-input');
-    const url = addressInput.value;
-    if (url) {
-        currentUrl = url;
-        navigateTo(url);
-    }
+    let url = addressInput.value;
+    iframe.src = url;
+    updateAddressBar(url);
+}
+
+function updateAddressBar(url) {
+    addressInput.value = url;
 }
 
 function goBack() {
-    const iframe = document.getElementById('browser-frame');
     iframe.contentWindow.history.back();
 }
 
 function goForward() {
-    const iframe = document.getElementById('browser-frame');
     iframe.contentWindow.history.forward();
 }
 
 function reloadPage() {
-    const iframe = document.getElementById('browser-frame');
     iframe.contentWindow.location.reload();
 }
 
