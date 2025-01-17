@@ -76,7 +76,7 @@ function replaceUrlsWithProxy(content, baseUrl) {
     for (const pattern of urlPatterns) {
         content = content.replace(pattern, (match, prefix, url) => {
             const fullUrl = new URL(url, baseUrl).toString();
-            return `${prefix}/proxy?url=${encodeURIComponent(fullUrl)}`;
+            return `${prefix}${fullUrl}`;
         });
     }
 
