@@ -45,7 +45,10 @@ async function handleRequest(request) {
 
             if (contentType.includes('text/html')) {
                 const text = await response.text();
-                data = replaceUrlsWithProxy(text, targetUrl);
+                // <base>タグを追加して相対URLを正しく解決
+                const baseTag = `<base href="${targetUrl}">`;
+                const rewrittenHTML = text.replace(/<head>/, `<head>${baseTag}`);
+                data = rewrittenHTML;
             } else {
                 data = await response.buffer();
             }
@@ -64,21 +67,4 @@ async function handleRequest(request) {
 
     // その他のリクエストは404を返す
     return new Response('Not Found', { status: 404 });
-}
-
-function replaceUrlsWithProxy(content, baseUrl) {
-    const urlPatterns = [
-        /(href=")(\/[^"]*)/g,
-        /(src=")(\/[^"]*)/g,
-        /(url\()([^)]*)/g,
-    ];
-
-    for (const pattern of urlPatterns) {
-        content = content.replace(pattern, (match, prefix, url) => {
-            const fullUrl = new URL(url, baseUrl).toString();
-            return `${prefix}${fullUrl}`;
-        });
-    }
-
-    return content;
 }
