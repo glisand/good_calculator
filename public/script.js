@@ -17,8 +17,7 @@ function calculate() {
         displayValue = result.toString();
         document.getElementById('display').value = displayValue;
 
-        // 隠しコマンドの条件を修正 (文字列ではなく数値で比較)
-        if (result === safeEvaluate('731+4545*1111/2222')) {
+        if (result === safeEvaluate('0731+4545*1111/2222')) {
             document.getElementById('popup').style.display = 'flex';
         }
     } catch (error) {
