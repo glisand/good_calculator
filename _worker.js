@@ -6,7 +6,6 @@ async function handleRequest(request) {
     const url = new URL(request.url);
     const path = url.pathname;
 
-    // 認証エンドポイント
     if (path === '/auth' && request.method === 'POST') {
         try {
             const { username, password } = await request.json();
@@ -27,34 +26,21 @@ async function handleRequest(request) {
                 status: 400,
             });
         }
-    }
-
-    // プロキシエンドポイント
-    if (path === '/proxy') {
+    } else if (path === '/proxy') {
         const targetUrl = url.searchParams.get('url') || 'https://yandex.com';
-    
+
         try {
-            const response = await fetch(targetUrl, {
-                method: request.method,
-                headers: {
-                    ...request.headers,
-                    'Access-Control-Allow-Origin': '*', // CORSの設定
-                },
-                body: request.method === 'POST' ? await request.text() : undefined,
-            });
-    
-            const contentType = response.headers.get('content-type') || '';
+            const response = await fetch(targetUrl, { method: 'GET' });
+            const contentType = response.headers.get('Content-Type');
             let data;
-    
+
             if (contentType.includes('text/html')) {
                 const text = await response.text();
-                const baseTag = `<base href="${targetUrl}">`;
-                const rewrittenHTML = text.replace(/<head>/, `<head>${baseTag}`);
-                data = rewrittenHTML;
+                data = replaceUrlsWithProxy(text, targetUrl, url.pathname);
             } else {
-                data = await response.buffer();
+                data = await response.arrayBuffer();
             }
-    
+
             return new Response(data, {
                 status: response.status,
                 headers: {
@@ -65,8 +51,24 @@ async function handleRequest(request) {
         } catch (error) {
             return new Response('Internal Server Error', { status: 500 });
         }
-    }    
+    } else {
+        return new Response('Not Found', { status: 404 });
+    }
+}
 
-    // その他のリクエストは404を返す
-    return new Response('Not Found', { status: 404 });
+function replaceUrlsWithProxy(content, baseUrl, clientRoute) {
+    const urlPatterns = [
+        /(href=")([^"]*)/g,
+        /(src=")([^"]*)/g,
+        /(url\()([^)]*)/g,
+    ];
+
+    for (const pattern of urlPatterns) {
+        content = content.replace(pattern, (match, prefix, url) => {
+            const fullUrl = new URL(url, baseUrl).toString();
+            return `${prefix}${clientRoute}?url=${encodeURIComponent(fullUrl)}`;
+        });
+    }
+
+    return content;
 }

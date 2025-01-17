@@ -136,7 +136,7 @@ function infixToPostfix(tokens) {
             while (stack.length > 0 && stack[stack.length - 1] !== '(') {
                 output.push(stack.pop());
             }
-            stack.pop();
+            stack.pop(); // '('を削除
         }
     }
 
