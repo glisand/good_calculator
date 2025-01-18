@@ -50,9 +50,20 @@ async function navigateTo(url) {
     try {
         const response = await fetch(`/proxy?url=${encodeURIComponent(url)}`);
         const html = await response.text();
-        browserContent.innerHTML = html;
-        rewriteLinksAndForms(url); // ベースURLを渡す
-        rewriteResourceUrls(url); // ベースURLを渡す
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+
+        // <base> タグの処理
+        let baseTag = doc.querySelector('base');
+        if (!baseTag) {
+            baseTag = document.createElement('base');
+            doc.head.insertBefore(baseTag, doc.head.firstChild);
+        }
+        baseTag.href = new URL(url).origin; // プロキシ元のオリジンを設定
+
+        browserContent.innerHTML = doc.body.innerHTML; // body の中身のみを更新
+        rewriteLinksAndForms(new URL(url).origin); // オリジンを渡す
+        rewriteResourceUrls(new URL(url).origin); // オリジンを渡す
         historyStack.push(url);
         currentIndex = historyStack.length - 1;
     } catch (e) {
@@ -63,58 +74,58 @@ async function navigateTo(url) {
     }
 }
 
-function rewriteLinksAndForms(baseUrl) {
+function rewriteLinksAndForms(baseUrlOrigin) {
     // リンクの書き換え
     const links = browserContent.querySelectorAll('a');
     links.forEach(link => {
-        link.addEventListener('click', (e) => {
-            e.preventDefault();
-            const href = link.getAttribute('href');
-            if (href) {
-                let absoluteUrl;
-                try {
-                    absoluteUrl = new URL(href, baseUrl).href;
-                } catch (error) {
-                    console.error("URLの解析に失敗:", href, error);
-                    return;
-                }
-                navigateTo(absoluteUrl);
+        const href = link.getAttribute('href');
+        if (href) {
+            let absoluteUrl;
+            try {
+                absoluteUrl = new URL(href, baseUrlOrigin).href;
+            } catch (e) {
+                console.warn('URLの解決に失敗:', href);
+                return;
             }
-        });
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                navigateTo(absoluteUrl);
+            });
+        }
     });
 
     // フォームの書き換え
     const forms = browserContent.querySelectorAll('form');
     forms.forEach(form => {
+        const action = form.getAttribute('action');
+        const method = form.getAttribute('method') || 'GET';
+        const formData = new FormData(form);
+        const urlParams = new URLSearchParams(formData).toString();
+        let absoluteActionUrl;
+        try {
+            absoluteActionUrl = new URL(action, baseUrlOrigin).href;
+        } catch (e) {
+            console.warn('URLの解決に失敗:', action);
+            return;
+        }
         form.addEventListener('submit', (e) => {
             e.preventDefault();
-            const action = form.getAttribute('action');
-            const method = form.getAttribute('method') || 'GET';
-            const formData = new FormData(form);
-            const urlParams = new URLSearchParams(formData).toString();
-            let absoluteActionUrl;
-            try {
-                absoluteActionUrl = new URL(action, baseUrl).href;
-            } catch (error) {
-                console.error("URLの解析に失敗:", action, error);
-                return;
-            }
             const fullUrl = method === 'GET' ? `${absoluteActionUrl}?${urlParams}` : absoluteActionUrl;
             navigateTo(fullUrl);
         });
     });
 }
 
-function rewriteResourceUrls(baseUrl) {
+function rewriteResourceUrls(baseUrlOrigin) {
     // 画像のURLをプロキシ経由に書き換え
     const images = browserContent.querySelectorAll('img');
     images.forEach(img => {
         const src = img.getAttribute('src');
         if (src && !src.startsWith('data:')) {
             try {
-                img.src = `/proxy?url=${encodeURIComponent(new URL(src, baseUrl).href)}`;
-            } catch (error) {
-                console.error("URLの解析に失敗:", src, error);
+                img.src = `/proxy?url=${encodeURIComponent(new URL(src, baseUrlOrigin).href)}`;
+            } catch (e) {
+                console.warn('URLの解決に失敗:', src);
             }
         }
     });
@@ -125,7 +136,7 @@ function rewriteResourceUrls(baseUrl) {
         const href = link.getAttribute('href') || link.getAttribute('src');
         if (href && !href.startsWith('data:')) {
             try {
-                const absoluteHref = new URL(href, baseUrl).href;
+                const absoluteHref = new URL(href, baseUrlOrigin).href;
                 const newHref = `/proxy?url=${encodeURIComponent(absoluteHref)}`;
                 if (link.tagName === 'LINK') {
                     link.href = newHref;
@@ -134,8 +145,8 @@ function rewriteResourceUrls(baseUrl) {
                     newScript.src = newHref;
                     link.replaceWith(newScript);
                 }
-            } catch (error) {
-                console.error("URLの解析に失敗:", href, error);
+            } catch (e) {
+                console.warn('URLの解決に失敗:', href);
             }
         }
     });
@@ -167,7 +178,5 @@ function goForward() {
 }
 
 function reloadPage() {
-    if (historyStack.length > 0 && currentIndex >= 0) {
-        navigateTo(historyStack[currentIndex]);
-    }
+    navigateTo(historyStack[currentIndex]);
 }
