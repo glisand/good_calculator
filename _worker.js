@@ -34,6 +34,17 @@ async function handleRequest(request) {
         }
     }
 
+    // プロキシされたリソースのエンドポイント
+    if (path === '/proxy-resource') {
+        try {
+            const { onRequestGetResource } = require('./functions/proxy');
+            return onRequestGetResource({ request });
+        } catch (e) {
+            console.error("Error handling /proxy-resource:", e);
+            return new Response('Internal Server Error', { status: 500 });
+        }
+    }
+
     // 他のパスは404
     return new Response('Not Found', { status: 404 });
 }

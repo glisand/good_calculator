@@ -5,17 +5,17 @@ let currentProxyUrl = '';
 let virtualBrowser = document.getElementById('virtual-browser');
 let iframe = document.getElementById('browser-frame');
 let addressInput = document.getElementById('address-input');
-
+let proxyWarning = document.getElementById('proxy-warning');
 
 function appendToDisplay(value) {
     displayValue += value;
     document.getElementById('display').value = displayValue;
-}    
+}
 
 function clearDisplay() {
     displayValue = '';
     document.getElementById('display').value = displayValue;
-}    
+}
 
 function calculate() {
     try {
@@ -25,17 +25,17 @@ function calculate() {
 
         if (result === safeEvaluate('0721+4545*1111/2222')) {
             document.getElementById('popup').style.display = 'flex';
-        }    
+        }
     } catch (error) {
         console.error('Calculation error:', error);
         displayValue = 'Error';
         document.getElementById('display').value = displayValue;
-    }    
-}    
+    }
+}
 
 function closePopup() {
     document.getElementById('popup').style.display = 'none';
-}    
+}
 
 async function submitCredentials() {
     const username = document.getElementById('username').value;
@@ -46,11 +46,11 @@ async function submitCredentials() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, password }),
-        });    
+        });
 
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
-        }    
+        }
 
         const data = await response.json();
 
@@ -64,24 +64,27 @@ async function submitCredentials() {
             proxyActive = true;
         } else {
             alert(data.message || '認証失敗');
-        }    
+        }
     } catch (error) {
         console.error('認証エラー:', error);
         alert('認証中にエラーが発生しました');
-    }    
-}    
+    }
+}
 
 function navigateToProxy(url) {
     currentProxyUrl = url;
     const iframe = document.getElementById('browser-frame');
     iframe.src = `/proxy?url=${encodeURIComponent(url)}`;
     document.getElementById('address-input').value = url;
-}    
+    proxyWarning.style.display = 'block';
+}
 
 function navigate() {
     let url = addressInput.value;
-    iframe.src = url;
-    updateAddressBar(url);
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        url = 'http://' + url;
+    }
+    navigateToProxy(url);
 }
 
 function updateAddressBar(url) {
@@ -170,3 +173,7 @@ function evaluatePostfix(postfix) {
 
     return stack[0];
 }
+
+iframe.onload = () => {
+    updateAddressBar(iframe.contentWindow.location.href);
+};
