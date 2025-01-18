@@ -7,52 +7,40 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="calculator-container">
-        <div id="calculator">
-            <div id="display">0</div>
-            <div class="buttons">
-                <button>7</button>
-                <button>8</button>
-                <button>9</button>
-                <button>/</button>
-                <button>4</button>
-                <button>5</button>
-                <button>6</button>
-                <button>×</button>
-                <button>1</button>
-                <button>2</button>
-                <button>3</button>
-                <button>-</button>
-                <button>0</button>
-                <button>.</button>
-                <button>+</button>
-                <button>=</button>
-                <button>√</button>
-                <button>^</button>
-                <button>C</button>
-            </div>
+    <div id="calculator">
+        <input type="text" id="display" disabled>
+        <div id="buttons">
+            <button onclick="appendNumber('7')">7</button>
+            <button onclick="appendNumber('8')">8</button>
+            <button onclick="appendNumber('9')">9</button>
+            <button onclick="appendOperator('+')">+</button>
+            <button onclick="appendNumber('4')">4</button>
+            <button onclick="appendNumber('5')">5</button>
+            <button onclick="appendNumber('6')">6</button>
+            <button onclick="appendOperator('-')">-</button>
+            <button onclick="appendNumber('1')">1</button>
+            <button onclick="appendNumber('2')">2</button>
+            <button onclick="appendNumber('3')">3</button>
+            <button onclick="appendOperator('×')">×</button>
+            <button onclick="appendNumber('0')">0</button>
+            <button onclick="appendDecimal()">.</button>
+            <button onclick="calculate()">=</button>
+            <button onclick="appendOperator('÷')">÷</button>
+            <button onclick="clearDisplay()">C</button>
+            <button onclick="sqrt()">√</button>
+            <button onclick="power()">^</button>
         </div>
     </div>
-
-    <div id="auth-popup" class="popup">
-        <div class="popup-content">
-            <p>認証が必要です</p>
-            <input type="text" id="auth-user" placeholder="ユーザー名">
-            <input type="text" id="auth-pass" placeholder="パスワード">
-            <button id="auth-button">認証</button>
+    <div id="browser" style="display:none;">
+        <div id="browser-controls">
+            <button onclick="goBack()">元に戻る</button>
+            <button onclick="goForward()">やり直す</button>
+            <button onclick="reloadPage()">再読み込み</button>
+            <input type="text" id="address-bar" placeholder="Enter URL">
+            <button onclick="navigate()">Go</button>
         </div>
+        <iframe id="browser-content" src=""></iframe>
     </div>
-
-    <div id="browser-container" class="hidden">
-        <div class="browser-bar">
-            <button id="browser-back">元に戻る</button>
-            <button id="browser-forward">やり直す</button>
-            <button id="browser-reload">再読み込み</button>
-            <input type="text" id="browser-address" value="https://yandex.com">
-        </div>
-        <div id="browser-content"></div>
-    </div>
-
     <script src="script.js"></script>
 </body>
 </html>
