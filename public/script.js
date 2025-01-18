@@ -51,8 +51,8 @@ async function navigateTo(url) {
         const response = await fetch(`/proxy?url=${encodeURIComponent(url)}`);
         const html = await response.text();
         browserContent.innerHTML = html;
-        rewriteLinksAndForms();
-        rewriteResourceUrls();
+        rewriteLinksAndForms(url); // ベースURLを渡す
+        rewriteResourceUrls(url); // ベースURLを渡す
         historyStack.push(url);
         currentIndex = historyStack.length - 1;
     } catch (e) {
@@ -63,15 +63,23 @@ async function navigateTo(url) {
     }
 }
 
-function rewriteLinksAndForms() {
+function rewriteLinksAndForms(baseUrl) {
     // リンクの書き換え
     const links = browserContent.querySelectorAll('a');
     links.forEach(link => {
         link.addEventListener('click', (e) => {
             e.preventDefault();
             const href = link.getAttribute('href');
-            const absoluteUrl = new URL(href, addressBar.value).href;
-            navigateTo(absoluteUrl);
+            if (href) {
+                let absoluteUrl;
+                try {
+                    absoluteUrl = new URL(href, baseUrl).href;
+                } catch (error) {
+                    console.error("URLの解析に失敗:", href, error);
+                    return;
+                }
+                navigateTo(absoluteUrl);
+            }
         });
     });
 
@@ -84,20 +92,30 @@ function rewriteLinksAndForms() {
             const method = form.getAttribute('method') || 'GET';
             const formData = new FormData(form);
             const urlParams = new URLSearchParams(formData).toString();
-            const absoluteUrl = new URL(action, addressBar.value).href;
-            const fullUrl = method === 'GET' ? `${absoluteUrl}?${urlParams}` : absoluteUrl;
+            let absoluteActionUrl;
+            try {
+                absoluteActionUrl = new URL(action, baseUrl).href;
+            } catch (error) {
+                console.error("URLの解析に失敗:", action, error);
+                return;
+            }
+            const fullUrl = method === 'GET' ? `${absoluteActionUrl}?${urlParams}` : absoluteActionUrl;
             navigateTo(fullUrl);
         });
     });
 }
 
-function rewriteResourceUrls() {
+function rewriteResourceUrls(baseUrl) {
     // 画像のURLをプロキシ経由に書き換え
     const images = browserContent.querySelectorAll('img');
     images.forEach(img => {
         const src = img.getAttribute('src');
         if (src && !src.startsWith('data:')) {
-            img.src = `/proxy?url=${encodeURIComponent(new URL(src, addressBar.value).href)}`;
+            try {
+                img.src = `/proxy?url=${encodeURIComponent(new URL(src, baseUrl).href)}`;
+            } catch (error) {
+                console.error("URLの解析に失敗:", src, error);
+            }
         }
     });
 
@@ -106,13 +124,18 @@ function rewriteResourceUrls() {
     links.forEach(link => {
         const href = link.getAttribute('href') || link.getAttribute('src');
         if (href && !href.startsWith('data:')) {
-            const newHref = `/proxy?url=${encodeURIComponent(new URL(href, addressBar.value).href)}`;
-            if (link.tagName === 'LINK') {
-                link.href = newHref;
-            } else if (link.tagName === 'SCRIPT') {
-                const newScript = document.createElement('script');
-                newScript.src = newHref;
-                link.replaceWith(newScript);
+            try {
+                const absoluteHref = new URL(href, baseUrl).href;
+                const newHref = `/proxy?url=${encodeURIComponent(absoluteHref)}`;
+                if (link.tagName === 'LINK') {
+                    link.href = newHref;
+                } else if (link.tagName === 'SCRIPT') {
+                    const newScript = document.createElement('script');
+                    newScript.src = newHref;
+                    link.replaceWith(newScript);
+                }
+            } catch (error) {
+                console.error("URLの解析に失敗:", href, error);
             }
         }
     });
@@ -144,5 +167,7 @@ function goForward() {
 }
 
 function reloadPage() {
-    navigateTo(historyStack[currentIndex]);
+    if (historyStack.length > 0 && currentIndex >= 0) {
+        navigateTo(historyStack[currentIndex]);
+    }
 }
