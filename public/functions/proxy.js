@@ -5,13 +5,12 @@ export async function onRequest(context) {
     if (!targetUrl) {
         return new Response('URL parameter is missing', { status: 400 });
     }
-    const proxyRequest = new Request(targetUrl, {
-        headers: request.headers,
-        method: request.method,
-        body: request.body
-    });
     try {
-        const response = await fetch(proxyRequest);
+        const response = await fetch(targetUrl, {
+            headers: request.headers,
+            method: request.method,
+            body: request.body
+        });
         const modifiedResponse = new Response(response.body, response);
         modifiedResponse.headers.set('Access-Control-Allow-Origin', '*');
         return modifiedResponse;

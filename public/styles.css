@@ -80,5 +80,7 @@ button:hover {
 
 #browser-content {
   flex-grow: 1;
-  border: none;
+  padding: 10px;
+  overflow: auto;
+  background-color: #fff;
 }

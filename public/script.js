@@ -2,6 +2,8 @@ let display = document.getElementById('display');
 let browser = document.getElementById('browser');
 let browserContent = document.getElementById('browser-content');
 let addressBar = document.getElementById('address-bar');
+let historyStack = [];
+let currentIndex = -1;
 
 function appendToDisplay(value) {
     display.innerText += value;
@@ -37,27 +39,41 @@ function showBrowser() {
     }
 }
 
-function navigateTo(url) {
-    addressBar.value = url;
-    browserContent.src = `/proxy?url=${encodeURIComponent(url)}`;
-}
-
-function navigate() {
-    let url = addressBar.value;
+async function navigateTo(url) {
     if (!url.startsWith('http')) {
         url = 'https://' + url;
     }
+    addressBar.value = url;
+    try {
+        const response = await fetch(`/proxy?url=${encodeURIComponent(url)}`);
+        const html = await response.text();
+        browserContent.innerHTML = html;
+        historyStack.push(url);
+        currentIndex = historyStack.length - 1;
+    } catch (e) {
+        browserContent.innerHTML = `<p>エラー: ${e.message}</p>`;
+    }
+}
+
+function navigate() {
+    const url = addressBar.value;
     navigateTo(url);
 }
 
 function goBack() {
-    browserContent.contentWindow.history.back();
+    if (currentIndex > 0) {
+        currentIndex--;
+        navigateTo(historyStack[currentIndex]);
+    }
 }
 
 function goForward() {
-    browserContent.contentWindow.history.forward();
+    if (currentIndex < historyStack.length - 1) {
+        currentIndex++;
+        navigateTo(historyStack[currentIndex]);
+    }
 }
 
 function reloadPage() {
-    browserContent.contentWindow.location.reload();
+    navigateTo(historyStack[currentIndex]);
 }
