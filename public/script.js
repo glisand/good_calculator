@@ -52,6 +52,7 @@ async function navigateTo(url) {
         const html = await response.text();
         browserContent.innerHTML = html;
         rewriteLinksAndForms();
+        rewriteResourceUrls();
         historyStack.push(url);
         currentIndex = historyStack.length - 1;
     } catch (e) {
@@ -84,6 +85,33 @@ function rewriteLinksAndForms() {
             const fullUrl = `${action}?${urlParams}`;
             navigateTo(fullUrl);
         });
+    });
+}
+
+function rewriteResourceUrls() {
+    // 画像のURLをプロキシ経由に書き換え
+    const images = browserContent.querySelectorAll('img');
+    images.forEach(img => {
+        const src = img.getAttribute('src');
+        if (src && !src.startsWith('data:')) {
+            img.src = `/proxy?url=${encodeURIComponent(new URL(src, addressBar.value).href)}`;
+        }
+    });
+
+    // CSSやJSのURLをプロキシ経由に書き換え
+    const links = browserContent.querySelectorAll('link[href], script[src]');
+    links.forEach(link => {
+        const href = link.getAttribute('href') || link.getAttribute('src');
+        if (href && !href.startsWith('data:')) {
+            const newHref = `/proxy?url=${encodeURIComponent(new URL(href, addressBar.value).href)}`;
+            if (link.tagName === 'LINK') {
+                link.href = newHref;
+            } else if (link.tagName === 'SCRIPT') {
+                const newScript = document.createElement('script');
+                newScript.src = newHref;
+                link.replaceWith(newScript);
+            }
+        }
     });
 }
 
