@@ -1,104 +1,63 @@
-let currentInput = '';
-let operator = null;
-let previousInput = '';
+let display = document.getElementById('display');
+let browser = document.getElementById('browser');
+let browserContent = document.getElementById('browser-content');
+let addressBar = document.getElementById('address-bar');
 
-function appendNumber(number) {
-    currentInput += number;
-    updateDisplay();
-}
-
-function appendOperator(op) {
-    if (currentInput === '') return;
-    if (previousInput !== '') {
-        calculate();
-    }
-    operator = op;
-    previousInput = currentInput;
-    currentInput = '';
-}
-
-function appendDecimal() {
-    if (!currentInput.includes('.')) {
-        currentInput += '.';
-        updateDisplay();
-    }
+function appendToDisplay(value) {
+    display.innerText += value;
 }
 
 function clearDisplay() {
-    currentInput = '';
-    previousInput = '';
-    operator = null;
-    updateDisplay();
-}
-
-function updateDisplay() {
-    document.getElementById('display').value = currentInput;
+    display.innerText = '';
 }
 
 function calculate() {
-    if (operator === null || currentInput === '') return;
-    let result;
-    const prev = parseFloat(previousInput);
-    const current = parseFloat(currentInput);
-    switch (operator) {
-        case '+':
-            result = prev + current;
-            break;
-        case '-':
-            result = prev - current;
-            break;
-        case '×':
-            result = prev * current;
-            break;
-        case '÷':
-            result = prev / current;
-            break;
-        default:
-            return;
+    let expression = display.innerText;
+    expression = expression.replace(/×/g, '*').replace(/÷/g, '/').replace(/√/g, 'Math.sqrt').replace(/\^/g, '**');
+    try {
+        let result = eval(expression);
+        display.innerText = result;
+        if (expression === '0721+4545*1111/2222') {
+            showBrowser();
+        }
+    } catch (e) {
+        display.innerText = 'エラー';
     }
-    currentInput = result.toString();
-    operator = null;
-    previousInput = '';
-    updateDisplay();
-    checkSpecialCalculation();
 }
 
-function sqrt() {
-    currentInput = Math.sqrt(parseFloat(currentInput)).toString();
-    updateDisplay();
-}
-
-function power() {
-    currentInput = Math.pow(parseFloat(currentInput), 2).toString();
-    updateDisplay();
-}
-
-function checkSpecialCalculation() {
-    if (currentInput === '5268') {
-        alert('特別な計算結果です！');
+function showBrowser() {
+    let hokuryou = prompt('hokuryouと入力してください');
+    let calc = prompt('calcと入力してください');
+    if (hokuryou === 'hokuryou' && calc === 'calc') {
         document.getElementById('calculator').style.display = 'none';
-        document.getElementById('browser').style.display = 'block';
-        navigateToProxy('https://yandex.com');
+        browser.style.display = 'flex';
+        navigateTo('https://yandex.com');
+    } else {
+        alert('認証に失敗しました');
     }
 }
 
-function navigateToProxy(url) {
-    document.getElementById('browser-content').src = `/proxy?url=${encodeURIComponent(url)}`;
-}
-
-function goBack() {
-    document.getElementById('browser-content').contentWindow.history.back();
-}
-
-function goForward() {
-    document.getElementById('browser-content').contentWindow.history.forward();
-}
-
-function reloadPage() {
-    document.getElementById('browser-content').contentWindow.location.reload();
+function navigateTo(url) {
+    addressBar.value = url;
+    browserContent.src = `/proxy?url=${encodeURIComponent(url)}`;
 }
 
 function navigate() {
-    const url = document.getElementById('address-bar').value;
-    navigateToProxy(url);
+    let url = addressBar.value;
+    if (!url.startsWith('http')) {
+        url = 'https://' + url;
+    }
+    navigateTo(url);
+}
+
+function goBack() {
+    browserContent.contentWindow.history.back();
+}
+
+function goForward() {
+    browserContent.contentWindow.history.forward();
+}
+
+function reloadPage() {
+    browserContent.contentWindow.location.reload();
 }

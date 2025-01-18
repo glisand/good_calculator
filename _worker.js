@@ -12,13 +12,16 @@ async function handleRequest(request) {
         const proxyRequest = new Request(targetUrl, {
             headers: request.headers,
             method: request.method,
-            body: request.body,
-            redirect: 'follow'
+            body: request.body
         });
-        const response = await fetch(proxyRequest);
-        const modifiedResponse = new Response(response.body, response);
-        modifiedResponse.headers.set('Access-Control-Allow-Origin', '*');
-        return modifiedResponse;
+        try {
+            const response = await fetch(proxyRequest);
+            const modifiedResponse = new Response(response.body, response);
+            modifiedResponse.headers.set('Access-Control-Allow-Origin', '*');
+            return modifiedResponse;
+        } catch (e) {
+            return new Response('Proxy error', { status: 500 });
+        }
     }
     return fetch(request);
 }
