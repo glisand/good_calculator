@@ -1,180 +1,282 @@
-// script.js
-let displayValue = '';
-let proxyActive = false;
-let currentProxyUrl = '';
+const display = document.getElementById('display');
+const buttons = document.querySelectorAll('.buttons button');
+const authPopup = document.getElementById('auth-popup');
+const authUser = document.getElementById('auth-user');
+const authPass = document.getElementById('auth-pass');
+const authButton = document.getElementById('auth-button');
+const calculatorContainer = document.querySelector('.calculator-container');
+const browserContainer = document.getElementById('browser-container');
+const browserAddress = document.getElementById('browser-address');
+const browserContent = document.getElementById('browser-content');
+const browserBack = document.getElementById('browser-back');
+const browserForward = document.getElementById('browser-forward');
+const browserReload = document.getElementById('browser-reload');
 
-let virtualBrowser = document.getElementById('virtual-browser');
-let iframe = document.getElementById('browser-frame');
-let addressInput = document.getElementById('address-input');
-let proxyWarning = document.getElementById('proxy-warning');
+let currentExpression = '';
 
-function appendToDisplay(value) {
-    displayValue += value;
-    document.getElementById('display').value = displayValue;
-}
-
-function clearDisplay() {
-    displayValue = '';
-    document.getElementById('display').value = displayValue;
-}
-
-function calculate() {
-    try {
-        const result = safeEvaluate(displayValue);
-        displayValue = result.toString();
-        document.getElementById('display').value = displayValue;
-
-        if (result === safeEvaluate('0721+4545*1111/2222')) {
-            document.getElementById('popup').style.display = 'flex';
+buttons.forEach(button => {
+    button.addEventListener('click', () => {
+        const value = button.textContent;
+        switch (value) {
+            case '=':
+                try {
+                    const result = eval(currentExpression.replace('√', 'Math.sqrt').replace('^', '**'));
+                    display.textContent = result;
+                    if (currentExpression === '0721+4545*1111/2222') {
+                        authPopup.classList.remove('hidden');
+                    }
+                    currentExpression = result.toString();
+                } catch (error) {
+                    display.textContent = 'Error';
+                }
+                break;
+            case 'C':
+                currentExpression = '';
+                display.textContent = '0';
+                break;
+            case '√':
+                currentExpression += 'Math.sqrt(';
+                display.textContent = currentExpression;
+                break;
+            case '^':
+                currentExpression += '**';
+                display.textContent = currentExpression;
+                break;
+            default:
+                currentExpression += value;
+                display.textContent = currentExpression;
         }
-    } catch (error) {
-        console.error('Calculation error:', error);
-        displayValue = 'Error';
-        document.getElementById('display').value = displayValue;
+    });
+});
+
+authButton.addEventListener('click', async () => {
+    const username = authUser.value;
+    const password = authPass.value;
+
+    const response = await fetch('/api/auth', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ username: username, password: password })
+    });
+
+    const data = await response.json();
+
+    if (data.authenticated) {
+        authPopup.classList.add('hidden');
+        calculatorContainer.classList.add('hidden');
+        browserContainer.classList.remove('hidden');
+        loadProxyContent(browserAddress.value);
+    } else {
+        alert('認証に失敗しました。');
     }
-}
+});
 
-function closePopup() {
-    document.getElementById('popup').style.display = 'none';
-}
-
-async function submitCredentials() {
-    const username = document.getElementById('username').value;
-    const password = document.getElementById('password').value;
-
+async function loadProxyContent(url) {
+    browserContent.innerHTML = '読み込み中...';
     try {
-        const response = await fetch('/auth', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password }),
-        });
-
+        const response = await fetch(`/api/proxy?url=${encodeURIComponent(url)}`);
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            browserContent.innerHTML = `エラーが発生しました: ${response.statusText}`;
+            return;
         }
+        const contentType = response.headers.get('Content-Type');
+        if (contentType && contentType.includes('text/html')) {
+            const html = await response.text();
+            browserContent.innerHTML = html;
+            // リンクのクリックをインターセプトしてプロキシ経由で処理
+            browserContent.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    const href = link.getAttribute('href');
+                    if (href && !href.startsWith('#') && !href.startsWith('mailto:') && !href.startsWith('javascript:')) {
+                        let absoluteUrl;
+                        try {
+                            absoluteUrl = new URL(href, url).href;
+                        } catch (e) {
+                            console.error("URLの解析に失敗:", href);
+                            return;
+                        }
+                        browserAddress.value = absoluteUrl;
+                        loadProxyContent(absoluteUrl);
+                    }
+                });
+            });
+             // フォームの送信をインターセプトしてプロキシ経由で処理
+            browserContent.querySelectorAll('form').forEach(form => {
+                form.addEventListener('submit', async (event) => {
+                    event.preventDefault();
+                    const method = form.getAttribute('method')?.toUpperCase() || 'GET';
+                    const action = form.getAttribute('action');
+                    let absoluteAction;
+                    try {
+                        absoluteAction = new URL(action, url).href;
+                    } catch (e) {
+                        console.error("フォームアクションURLの解析に失敗:", action);
+                        return;
+                    }
 
-        const data = await response.json();
+                    let formData;
+                    if (method === 'GET') {
+                        const params = new URLSearchParams(new FormData(form)).toString();
+                        browserAddress.value = `${absoluteAction}?${params}`;
+                        loadProxyContent(`${absoluteAction}?${params}`);
+                    } else if (method === 'POST') {
+                        formData = new FormData(form);
+                        browserContent.innerHTML = '送信中...';
+                        try {
+                            const proxyResponse = await fetch(`/api/proxy?url=${encodeURIComponent(absoluteAction)}`, {
+                                method: 'POST',
+                                body: formData
+                            });
+                            if (proxyResponse.ok) {
+                                const proxiedHtml = await proxyResponse.text();
+                                browserContent.innerHTML = proxiedHtml;
+                                // ここで再度リンクなどのイベントリスナーを設定する必要がある
+                                setupLinkInterception(absoluteAction);
+                                setupFormInterception(absoluteAction);
+                            } else {
+                                browserContent.innerHTML = `エラーが発生しました: ${proxyResponse.statusText}`;
+                            }
+                        } catch (error) {
+                            console.error("POSTリクエストエラー:", error);
+                            browserContent.innerHTML = 'エラーが発生しました。';
+                        }
+                    }
+                });
+            });
 
-        if (data.success) {
-            document.getElementById('popup').style.display = 'none';
-            document.getElementById('virtual-browser').style.display = 'flex';
-            document.querySelector('main').style.display = 'none';
-            document.querySelector('header').style.display = 'none';
-            document.querySelector('footer').style.display = 'none';
-            navigateToProxy('https://yandex.com');
-            proxyActive = true;
-            proxyWarning.style.display = 'none'; // 邪魔なので非表示にする
+            setupLinkInterception(url);
+            setupFormInterception(url);
+
+            // スクリプトの実行 (セキュリティリスクを考慮)
+            const scripts = browserContent.querySelectorAll('script');
+            scripts.forEach(script => {
+                const newScript = document.createElement('script');
+                if (script.src) {
+                    newScript.src = `/api/proxy-script?url=${encodeURIComponent(script.src)}`;
+                } else {
+                    newScript.textContent = script.textContent;
+                }
+                script.parentNode.replaceChild(newScript, script);
+            });
+
+            // 画像のURLをプロキシ経由にする
+            browserContent.querySelectorAll('img').forEach(img => {
+                const src = img.getAttribute('src');
+                if (src && !src.startsWith('data:')) {
+                    img.src = `/api/proxy-image?url=${encodeURIComponent(new URL(src, url).href)}`;
+                }
+            });
+
         } else {
-            alert(data.message || '認証失敗');
+            browserContent.innerHTML = `<a href="${response.url}" target="_blank" rel="noopener noreferrer">ファイルを開く: ${response.url}</a>`;
         }
     } catch (error) {
-        console.error('認証エラー:', error);
-        alert('認証中にエラーが発生しました');
+        console.error("Fetchエラー:", error);
+        browserContent.innerHTML = 'ページの読み込みに失敗しました。';
     }
 }
 
-function navigateToProxy(url) {
-    currentProxyUrl = url;
-    const iframe = document.getElementById('browser-frame');
-    iframe.src = `/proxy?url=${encodeURIComponent(url)}`;
-    document.getElementById('address-input').value = url;
-}
-
-function navigate() {
-    let url = addressInput.value;
-    if (!url.startsWith('http://') && !url.startsWith('https://')) {
-        url = 'http://' + url;
-    }
-    navigateToProxy(url);
-}
-
-function updateAddressBar(url) {
-    addressInput.value = url;
-}
-
-function goBack() {
-    iframe.contentWindow.history.back();
-}
-
-function goForward() {
-    iframe.contentWindow.history.forward();
-}
-
-function reloadPage() {
-    iframe.contentWindow.location.reload();
-}
-
-function safeEvaluate(expression) {
-    const tokens = tokenize(expression);
-    const postfix = infixToPostfix(tokens);
-    return evaluatePostfix(postfix);
-}
-
-function tokenize(expression) {
-    const regex = /\d+\.?\d*|[\+\-\*/()]/g;
-    return expression.match(regex) || [];
-}
-
-function infixToPostfix(tokens) {
-    const precedence = { '+': 1, '-': 1, '*': 2, '/': 2 };
-    const stack = [];
-    const output = [];
-
-    for (const token of tokens) {
-        if (!isNaN(token)) {
-            output.push(token);
-        } else if (token in precedence) {
-            while (
-                stack.length > 0 &&
-                stack[stack.length - 1] !== '(' &&
-                precedence[stack[stack.length - 1]] >= precedence[token]
-            ) {
-                output.push(stack.pop());
+function setupLinkInterception(baseUrl) {
+    browserContent.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', (event) => {
+            event.preventDefault();
+            const href = link.getAttribute('href');
+            if (href && !href.startsWith('#') && !href.startsWith('mailto:') && !href.startsWith('javascript:')) {
+                let absoluteUrl;
+                try {
+                    absoluteUrl = new URL(href, baseUrl).href;
+                } catch (e) {
+                    console.error("URLの解析に失敗:", href);
+                    return;
+                }
+                browserAddress.value = absoluteUrl;
+                loadProxyContent(absoluteUrl);
             }
-            stack.push(token);
-        } else if (token === '(') {
-            stack.push(token);
-        } else if (token === ')') {
-            while (stack.length > 0 && stack[stack.length - 1] !== '(') {
-                output.push(stack.pop());
-            }
-            stack.pop();
-        }
-    }
-
-    while (stack.length > 0) {
-        output.push(stack.pop());
-    }
-
-    return output;
+        });
+    });
 }
 
-function evaluatePostfix(postfix) {
-    const stack = [];
-
-    for (const token of postfix) {
-        if (!isNaN(token)) {
-            stack.push(parseFloat(token));
-        } else {
-            const b = stack.pop();
-            const a = stack.pop();
-            switch (token) {
-                case '+': stack.push(a + b); break;
-                case '-': stack.push(a - b); break;
-                case '*': stack.push(a * b); break;
-                case '/': stack.push(a / b); break;
-                default: throw new Error('Unknown operator: ' + token);
+function setupFormInterception(baseUrl) {
+    browserContent.querySelectorAll('form').forEach(form => {
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const method = form.getAttribute('method')?.toUpperCase() || 'GET';
+            const action = form.getAttribute('action');
+            let absoluteAction;
+            try {
+                absoluteAction = new URL(action, baseUrl).href;
+            } catch (e) {
+                console.error("フォームアクションURLの解析に失敗:", action);
+                return;
             }
-        }
-    }
 
-    if (stack.length !== 1) {
-        throw new Error('Invalid expression');
-    }
-
-    return stack[0];
+            let formData;
+            if (method === 'GET') {
+                const params = new URLSearchParams(new FormData(form)).toString();
+                browserAddress.value = `${absoluteAction}?${params}`;
+                loadProxyContent(`${absoluteAction}?${params}`);
+            } else if (method === 'POST') {
+                formData = new FormData(form);
+                browserContent.innerHTML = '送信中...';
+                try {
+                    const proxyResponse = await fetch(`/api/proxy?url=${encodeURIComponent(absoluteAction)}`, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    if (proxyResponse.ok) {
+                        const proxiedHtml = await proxyResponse.text();
+                        browserContent.innerHTML = proxiedHtml;
+                        setupLinkInterception(absoluteAction);
+                        setupFormInterception(absoluteAction);
+                    } else {
+                        browserContent.innerHTML = `エラーが発生しました: ${proxyResponse.statusText}`;
+                    }
+                } catch (error) {
+                    console.error("POSTリクエストエラー:", error);
+                    browserContent.innerHTML = 'エラーが発生しました。';
+                }
+            }
+        });
+    });
 }
 
-iframe.onload = () => {
-    updateAddressBar(iframe.contentWindow.location.href.replace(/^https:\/\/smooth-calculator\.pages\.dev\/proxy\?url=/, ''));
-};
+browserAddress.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+        loadProxyContent(browserAddress.value);
+    }
+});
+
+browserReload.addEventListener('click', () => {
+    loadProxyContent(browserAddress.value);
+});
+
+// ナビゲーション履歴の簡略化
+const historyStack = [];
+let historyIndex = -1;
+
+browserBack.addEventListener('click', () => {
+    if (historyIndex > 0) {
+        historyIndex--;
+        browserAddress.value = historyStack[historyIndex];
+        loadProxyContent(historyStack[historyIndex]);
+    }
+});
+
+browserForward.addEventListener('click', () => {
+    if (historyIndex < historyStack.length - 1) {
+        historyIndex++;
+        browserAddress.value = historyStack[historyIndex];
+        loadProxyContent(historyStack[historyIndex]);
+    }
+});
+
+function updateHistory(url) {
+    // 現在のURLが履歴の末尾と異なる場合のみ追加
+    if (historyStack.length === 0 || historyStack[historyStack.length - 1] !== url) {
+        historyStack.push(url);
+        historyIndex = historyStack.length - 1;
+    }
+}

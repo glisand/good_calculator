@@ -4,66 +4,53 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>超軽量計算機</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <header>
-        <h1>超軽量計算機</h1>
-        <p>シンプルで使いやすい計算機です。四則演算を簡単に行えます。</p>
-    </header>
-    <main>
-        <div class="calculator">
-            <input type="text" id="display" disabled>
+    <div class="calculator-container">
+        <div id="calculator">
+            <div id="display">0</div>
             <div class="buttons">
-                <button onclick="appendToDisplay('7')">7</button>
-                <button onclick="appendToDisplay('8')">8</button>
-                <button onclick="appendToDisplay('9')">9</button>
-                <button onclick="appendToDisplay('+')">+</button>
-                <button onclick="appendToDisplay('4')">4</button>
-                <button onclick="appendToDisplay('5')">5</button>
-                <button onclick="appendToDisplay('6')">6</button>
-                <button onclick="appendToDisplay('-')">-</button>
-                <button onclick="appendToDisplay('1')">1</button>
-                <button onclick="appendToDisplay('2')">2</button>
-                <button onclick="appendToDisplay('3')">3</button>
-                <button onclick="appendToDisplay('*')">*</button>
-                <button onclick="appendToDisplay('0')">0</button>
-                <button onclick="appendToDisplay('.')">.</button>
-                <button onclick="calculate()">=</button>
-                <button onclick="appendToDisplay('/')">/</button>
-                <button onclick="clearDisplay()">C</button>
+                <button>7</button>
+                <button>8</button>
+                <button>9</button>
+                <button>/</button>
+                <button>4</button>
+                <button>5</button>
+                <button>6</button>
+                <button>×</button>
+                <button>1</button>
+                <button>2</button>
+                <button>3</button>
+                <button>-</button>
+                <button>0</button>
+                <button>.</button>
+                <button>+</button>
+                <button>=</button>
+                <button>√</button>
+                <button>^</button>
+                <button>C</button>
             </div>
-        </div>
-    </main>
-    <footer>
-        <p>© 2025 glisand. All rights reserved.</p>
-    </footer>
-
-    <div id="popup" class="popup">
-        <div class="popup-content">
-            <span class="close" onclick="closePopup()">×</span>
-            <input type="text" id="username">
-            <input type="password" id="password">
-            <button onclick="submitCredentials()">[ ]</button>
         </div>
     </div>
 
-    <div id="virtual-browser" class="virtual-browser" style="display: none;">
-        <div class="browser-header">
-            <div class="navigation-buttons">
-                <button onclick="goBack()">戻る</button>
-                <button onclick="goForward()">進む</button>
-                <button onclick="reloadPage()">再読み込み</button>
-            </div>
-            <div class="address-bar">
-                <input type="text" id="address-input" placeholder="URLを入力">
-                <button onclick="navigate()">移動</button>
-            </div>
+    <div id="auth-popup" class="popup">
+        <div class="popup-content">
+            <p>認証が必要です</p>
+            <input type="text" id="auth-user" placeholder="ユーザー名">
+            <input type="text" id="auth-pass" placeholder="パスワード">
+            <button id="auth-button">認証</button>
         </div>
-        <iframe id="browser-frame" src="about:blank"></iframe>
-        <p id="proxy-warning" style="color: red; display: none;">
-            一部のウェブサイトは、セキュリティ設定によりこの仮想ブラウザ内で正常に動作しない場合があります。
-        </p>
+    </div>
+
+    <div id="browser-container" class="hidden">
+        <div class="browser-bar">
+            <button id="browser-back">元に戻る</button>
+            <button id="browser-forward">やり直す</button>
+            <button id="browser-reload">再読み込み</button>
+            <input type="text" id="browser-address" value="https://yandex.com">
+        </div>
+        <div id="browser-content"></div>
     </div>
 
     <script src="script.js"></script>

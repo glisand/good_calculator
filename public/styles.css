@@ -1,140 +1,128 @@
 body {
-  font-family: Arial, sans-serif;
-  margin: 0;
-  padding: 0;
+  font-family: sans-serif;
   display: flex;
-  flex-direction: column;
-  align-items: center;
   justify-content: center;
-  height: 100vh;
-  background-color: #f4f4f4;
+  align-items: center;
+  min-height: 100vh;
+  background-color: #f0f0f0;
+  margin: 0;
 }
 
-header {
-  text-align: center;
-  margin-bottom: 20px;
-}
-
-header h1 {
-  font-size: 2.5rem;
-  color: #333;
-}
-
-header p {
-  font-size: 1rem;
-  color: #666;
-}
-
-.calculator {
+.calculator-container {
   background-color: #fff;
-  padding: 20px;
   border-radius: 10px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  padding: 20px;
 }
 
-#display {
-  width: 100%;
-  height: 40px;
-  margin-bottom: 10px;
+#calculator #display {
+  background-color: #e0e0e0;
+  padding: 10px;
   text-align: right;
-  padding: 5px;
-  font-size: 18px;
-  border: 1px solid #ccc;
+  font-size: 2em;
+  margin-bottom: 10px;
   border-radius: 5px;
+  overflow: hidden;
 }
 
-.buttons {
+#calculator .buttons {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 10px;
 }
 
+#calculator .buttons button {
+  padding: 15px;
+  font-size: 1.5em;
+  border: none;
+  border-radius: 5px;
+  background-color: #ddd;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+#calculator .buttons button:hover {
+  background-color: #ccc;
+}
+
 .popup {
-  display: none;
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
   background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
   justify-content: center;
   align-items: center;
+  z-index: 1000;
 }
 
 .popup-content {
   background-color: #fff;
   padding: 20px;
   border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
   text-align: center;
 }
 
-.close {
-  float: right;
-  cursor: pointer;
-}
-
-input {
-  display: block;
+.popup-content input[type="text"] {
   margin: 10px 0;
   padding: 10px;
-  width: 100%;
-  font-size: 16px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  width: 80%;
 }
 
-button {
+.popup-content button {
   padding: 10px 20px;
-  font-size: 16px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
   cursor: pointer;
 }
 
-button:hover {
-  background-color: #ddd;
-}
-
-footer {
-  margin-top: 20px;
-  text-align: center;
-  font-size: 0.9rem;
-  color: #666;
-}
-
-.virtual-browser {
+#browser-container {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: white;
-  z-index: 1000;
-  display: none; /* 初期状態で非表示にする */
-  flex-direction: column; /* 縦方向に要素を並べる */
-}
-
-.browser-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px;
-    background-color: #f1f1f1;
-    border-bottom: 1px solid #ccc;
-}
-
-.navigation-buttons button {
-    margin-right: 5px;
-}
-
-.address-bar {
+  background-color: #fff;
   display: flex;
+  flex-direction: column;
 }
 
-#address-input {
-  flex: 1;
-  padding: 5px;
-  font-size: 16px;
+.browser-bar {
+  background-color: #eee;
+  padding: 10px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  border-bottom: 1px solid #ccc;
 }
 
-#browser-frame {
-  width: 100%;
-  height: calc(100% - 90px); /* ヘッダーと警告メッセージの高さ分を引く */
-  border: none;
+.browser-bar button {
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.browser-bar #browser-address {
+  flex-grow: 1;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+#browser-content {
+  flex-grow: 1;
+  overflow: auto;
+  padding: 10px;
+}
+
+.hidden {
+  display: none !important;
 }
