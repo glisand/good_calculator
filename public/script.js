@@ -2,6 +2,7 @@ let display = document.getElementById('display');
 let browser = document.getElementById('browser');
 let browserContent = document.getElementById('browser-content');
 let addressBar = document.getElementById('address-bar');
+let loading = document.getElementById('loading');
 let historyStack = [];
 let currentIndex = -1;
 
@@ -44,20 +45,57 @@ async function navigateTo(url) {
         url = 'https://' + url;
     }
     addressBar.value = url;
+    loading.style.display = 'flex';
+    browserContent.style.display = 'none';
     try {
         const response = await fetch(`/proxy?url=${encodeURIComponent(url)}`);
         const html = await response.text();
         browserContent.innerHTML = html;
+        rewriteLinksAndForms();
         historyStack.push(url);
         currentIndex = historyStack.length - 1;
     } catch (e) {
         browserContent.innerHTML = `<p>エラー: ${e.message}</p>`;
+    } finally {
+        loading.style.display = 'none';
+        browserContent.style.display = 'block';
     }
+}
+
+function rewriteLinksAndForms() {
+    // リンクの書き換え
+    const links = browserContent.querySelectorAll('a');
+    links.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            navigateTo(link.href);
+        });
+    });
+
+    // フォームの書き換え
+    const forms = browserContent.querySelectorAll('form');
+    forms.forEach(form => {
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const action = form.action;
+            const method = form.method;
+            const formData = new FormData(form);
+            const urlParams = new URLSearchParams(formData).toString();
+            const fullUrl = `${action}?${urlParams}`;
+            navigateTo(fullUrl);
+        });
+    });
 }
 
 function navigate() {
     const url = addressBar.value;
     navigateTo(url);
+}
+
+function handleAddressBarKeyPress(event) {
+    if (event.key === 'Enter') {
+        navigate();
+    }
 }
 
 function goBack() {

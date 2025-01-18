@@ -37,9 +37,10 @@
             <button onclick="goBack()">元に戻る</button>
             <button onclick="goForward()">やり直す</button>
             <button onclick="reloadPage()">再読み込み</button>
-            <input type="text" id="address-bar" placeholder="URLを入力">
+            <input type="text" id="address-bar" placeholder="URLを入力" onkeypress="handleAddressBarKeyPress(event)">
             <button onclick="navigate()">移動</button>
         </div>
+        <div id="loading" style="display:none;">読み込み中...</div>
         <div id="browser-content"></div>
     </div>
 
