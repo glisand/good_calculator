@@ -69,7 +69,9 @@ function rewriteLinksAndForms() {
     links.forEach(link => {
         link.addEventListener('click', (e) => {
             e.preventDefault();
-            navigateTo(link.href);
+            const href = link.getAttribute('href');
+            const absoluteUrl = new URL(href, addressBar.value).href;
+            navigateTo(absoluteUrl);
         });
     });
 
@@ -78,11 +80,12 @@ function rewriteLinksAndForms() {
     forms.forEach(form => {
         form.addEventListener('submit', (e) => {
             e.preventDefault();
-            const action = form.action;
-            const method = form.method;
+            const action = form.getAttribute('action');
+            const method = form.getAttribute('method') || 'GET';
             const formData = new FormData(form);
             const urlParams = new URLSearchParams(formData).toString();
-            const fullUrl = `${action}?${urlParams}`;
+            const absoluteUrl = new URL(action, addressBar.value).href;
+            const fullUrl = method === 'GET' ? `${absoluteUrl}?${urlParams}` : absoluteUrl;
             navigateTo(fullUrl);
         });
     });
