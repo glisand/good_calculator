@@ -1,7 +1,7 @@
+// script.js
 let displayValue = '';
 let proxyActive = false;
 let currentProxyUrl = '';
-let firstProxyLoad = true;
 
 let virtualBrowser = document.getElementById('virtual-browser');
 let iframe = document.getElementById('browser-frame');
@@ -24,7 +24,7 @@ function calculate() {
         displayValue = result.toString();
         document.getElementById('display').value = displayValue;
 
-        if (result === safeEvaluate('0731+4545*1111/2222')) {
+        if (result === safeEvaluate('0721+4545*1111/2222')) {
             document.getElementById('popup').style.display = 'flex';
         }
     } catch (error) {
@@ -63,7 +63,7 @@ async function submitCredentials() {
             document.querySelector('footer').style.display = 'none';
             navigateToProxy('https://yandex.com');
             proxyActive = true;
-            firstProxyLoad = true;
+            proxyWarning.style.display = 'none'; // 邪魔なので非表示にする
         } else {
             alert(data.message || '認証失敗');
         }
@@ -78,10 +78,6 @@ function navigateToProxy(url) {
     const iframe = document.getElementById('browser-frame');
     iframe.src = `/proxy?url=${encodeURIComponent(url)}`;
     document.getElementById('address-input').value = url;
-    if (firstProxyLoad) {
-        proxyWarning.style.display = 'block';
-        firstProxyLoad = false;
-    }
 }
 
 function navigate() {
@@ -180,5 +176,5 @@ function evaluatePostfix(postfix) {
 }
 
 iframe.onload = () => {
-    updateAddressBar(iframe.contentWindow.location.href);
+    updateAddressBar(iframe.contentWindow.location.href.replace(/^https:\/\/smooth-calculator\.pages\.dev\/proxy\?url=/, ''));
 };

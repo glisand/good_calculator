@@ -4,7 +4,7 @@ export async function onRequestPost(context) {
     try {
         const { username, password } = await request.json();
 
-        if (username === 'glisand' && password === '0721454511112222') {
+        if (username === 'hokuryou' && password === 'loli') {
             return new Response(JSON.stringify({ success: true }), {
                 headers: { 'Content-Type': 'application/json' },
             });
