@@ -86,12 +86,11 @@ function rewriteLinksAndForms(baseUrl) {
     // フォームの書き換え
     const forms = browserContent.querySelectorAll('form');
     forms.forEach(form => {
-        form.addEventListener('submit', (e) => {
+        form.addEventListener('submit', async (e) => { // async 関数に変更
             e.preventDefault();
             const action = form.getAttribute('action');
             const method = form.getAttribute('method') || 'GET';
             const formData = new FormData(form);
-            const urlParams = new URLSearchParams(formData).toString();
             let absoluteActionUrl;
             try {
                 absoluteActionUrl = new URL(action, baseUrl).href;
@@ -99,8 +98,30 @@ function rewriteLinksAndForms(baseUrl) {
                 console.error("URLの解析に失敗:", action, error);
                 return;
             }
-            const fullUrl = method === 'GET' ? `${absoluteActionUrl}?${urlParams}` : absoluteActionUrl;
-            navigateTo(fullUrl);
+
+            loading.style.display = 'flex';
+            browserContent.style.display = 'none';
+
+            try {
+                const response = await fetch(`/proxy?url=${encodeURIComponent(absoluteActionUrl)}`, {
+                    method: method.toUpperCase(), // メソッドを大文字に
+                    headers: {
+                        'Content-Type': form.enctype === 'multipart/form-data' ? null : 'application/x-www-form-urlencoded', // multipart/form-data の場合は Content-Type をブラウザに任せる
+                    },
+                    body: method.toUpperCase() === 'GET' ? null : new URLSearchParams(formData).toString(), // GET の場合は body を null に
+                });
+                const html = await response.text();
+                browserContent.innerHTML = html;
+                rewriteLinksAndForms(absoluteActionUrl); // ベースURLを渡す
+                rewriteResourceUrls(absoluteActionUrl); // ベースURLを渡す
+                historyStack.push(absoluteActionUrl);
+                currentIndex = historyStack.length - 1;
+            } catch (error) {
+                browserContent.innerHTML = `<p>エラー: ${error.message}</p>`;
+            } finally {
+                loading.style.display = 'none';
+                browserContent.style.display = 'block';
+            }
         });
     });
 }
