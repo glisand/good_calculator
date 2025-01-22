@@ -56,14 +56,12 @@ button:hover {
   flex-direction: column;
 }
 
-/* browser-controls を browser-content の外に出したので、#browser 直下でスタイル指定 */
-#browser > #browser-controls {
+#browser-controls {
   display: flex;
   padding: 10px;
   background-color: #444;
 }
 
-/* browser-controls 内の button, input  */
 #browser-controls button {
   background-color: #666;
   color: #fff;
@@ -83,8 +81,9 @@ button:hover {
 
 #browser-content {
   flex-grow: 1;
-  padding: 10px;
-  overflow: auto;
+  border: none;
+  width: 100%;
+  height: calc(100vh - 50px); /* コントロールバーの高さを考慮 */
   background-color: #fff;
 }
 
