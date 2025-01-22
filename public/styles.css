@@ -8,12 +8,6 @@ body {
   margin: 0;
 }
 
-#container {
-    display: flex;
-    width: 100%;
-    height: 100%;
-}
-
 #calculator {
   background-color: #fff;
   padding: 20px;
@@ -58,17 +52,18 @@ button:hover {
   width: 100%;
   height: 100vh;
   background-color: #fff;
-  display: none; /* 初期状態は非表示 */
+  display: flex;
   flex-direction: column;
 }
 
-#browser-controls {
+/* browser-controls を browser-content の外に出したので、#browser 直下でスタイル指定 */
+#browser > #browser-controls {
   display: flex;
   padding: 10px;
   background-color: #444;
-  z-index: 1000; /* 他のコンテンツより前面に表示 */
 }
 
+/* browser-controls 内の button, input  */
 #browser-controls button {
   background-color: #666;
   color: #fff;

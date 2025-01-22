@@ -86,10 +86,10 @@ function rewriteLinksAndForms(baseUrl) {
     // フォームの書き換え
     const forms = browserContent.querySelectorAll('form');
     forms.forEach(form => {
-        form.addEventListener('submit', async (e) => { // async 関数に変更
+        form.addEventListener('submit', (e) => {
             e.preventDefault();
             const action = form.getAttribute('action');
-            const method = form.getAttribute('method') || 'GET';
+            const method = form.getAttribute('method') || 'GET'; // メソッドを取得 (デフォルトはGET)
             const formData = new FormData(form);
             let absoluteActionUrl;
             try {
@@ -99,29 +99,31 @@ function rewriteLinksAndForms(baseUrl) {
                 return;
             }
 
-            loading.style.display = 'flex';
-            browserContent.style.display = 'none';
-
-            try {
-                const response = await fetch(`/proxy?url=${encodeURIComponent(absoluteActionUrl)}`, {
-                    method: method.toUpperCase(), // メソッドを大文字に
-                    headers: {
-                        'Content-Type': form.enctype === 'multipart/form-data' ? null : 'application/x-www-form-urlencoded', // multipart/form-data の場合は Content-Type をブラウザに任せる
-                    },
-                    body: method.toUpperCase() === 'GET' ? null : new URLSearchParams(formData).toString(), // GET の場合は body を null に
-                });
-                const html = await response.text();
+            // fetch API で POST リクエストを送信するように変更
+            fetch(`/proxy?url=${encodeURIComponent(absoluteActionUrl)}`, {
+                method: method, // フォームのメソッドを使用 (GET, POST, ...)
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded' // Content-Type ヘッダーを設定
+                },
+                body: new URLSearchParams(formData).toString() // FormData を URLSearchParams に変換して送信
+            })
+            .then(response => response.text())
+            .then(html => {
                 browserContent.innerHTML = html;
-                rewriteLinksAndForms(absoluteActionUrl); // ベースURLを渡す
-                rewriteResourceUrls(absoluteActionUrl); // ベースURLを渡す
-                historyStack.push(absoluteActionUrl);
+                rewriteLinksAndForms(baseUrl); // 再度書き換え
+                rewriteResourceUrls(baseUrl); // 再度書き換え
+                historyStack.push(absoluteActionUrl); // 履歴に追加 (フォーム送信先URLで良いか要検討)
                 currentIndex = historyStack.length - 1;
-            } catch (error) {
+            })
+            .catch(error => {
                 browserContent.innerHTML = `<p>エラー: ${error.message}</p>`;
-            } finally {
+            })
+            .finally(() => {
                 loading.style.display = 'none';
                 browserContent.style.display = 'block';
-            }
+            });
+             loading.style.display = 'flex'; // ローディング表示開始 (fetch の開始時に移動)
+             browserContent.style.display = 'none'; // コンテンツを非表示にする (fetch の開始時に移動)
         });
     });
 }
