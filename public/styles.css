@@ -81,9 +81,8 @@ button:hover {
 
 #browser-content {
   flex-grow: 1;
-  border: none;
-  width: 100%;
-  height: calc(100vh - 50px); /* コントロールバーの高さを考慮 */
+  padding: 10px;
+  overflow: auto;
   background-color: #fff;
 }
 

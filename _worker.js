@@ -13,7 +13,7 @@ async function handleRequest(request) {
             const response = await fetch(targetUrl, {
                 headers: request.headers,
                 method: request.method,
-                body: request.method === 'POST' ? request.body : null,
+                body: request.body
             });
             const modifiedResponse = new Response(response.body, response);
             modifiedResponse.headers.set('Access-Control-Allow-Origin', '*');
